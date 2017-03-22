@@ -732,9 +732,9 @@ void FomodInstallerDialog::readFileList(XmlReader &reader, FileDescriptorList &f
                                                                : 0;
         file->m_FileSystemItemSequence = ++m_FileSystemItemSequence;
         file->m_IsFolder = reader.name() == "folder";
-        file->m_InstallIfUsable = attributes.hasAttribute("installIfUsable") ? (attributes.value("installIfUsable").compare("true") == 0)
+        file->m_InstallIfUsable = attributes.hasAttribute("installIfUsable") ? (attributes.value("installIfUsable").compare((QString)"true") == 0)
                                                                              : false;
-        file->m_AlwaysInstall = attributes.hasAttribute("alwaysInstall") ? (attributes.value("alwaysInstall").compare("true") == 0)
+        file->m_AlwaysInstall = attributes.hasAttribute("alwaysInstall") ? (attributes.value("alwaysInstall").compare((QString)"true") == 0)
                                                                          : false;
 
         fileList.push_back(file);
