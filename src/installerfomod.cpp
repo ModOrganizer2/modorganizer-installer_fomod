@@ -153,7 +153,7 @@ QStringList InstallerFomod::buildFomodTree(DirectoryTree &tree)
 IPluginList::PluginStates InstallerFomod::fileState(const QString &fileName)
 {
   QString ext = QFileInfo(fileName).suffix().toLower();
-  if ((ext == "esp") || (ext == "esm")) {
+  if ((ext == "esp") || (ext == "esm") || (ext == "esl")) {
     IPluginList::PluginStates state = m_MOInfo->pluginList()->state(fileName);
     if (state != IPluginList::STATE_MISSING) {
       return state;
@@ -172,7 +172,7 @@ IPluginList::PluginStates InstallerFomod::fileState(const QString &fileName)
       return IPluginList::STATE_ACTIVE;
     }
   } else {
-    qWarning() << "A dependency on non esp/esm " << fileName
+    qWarning() << "A dependency on non esp/esm/esl " << fileName
                << " will always find it as missing";
     return IPluginList::STATE_MISSING;
   }
