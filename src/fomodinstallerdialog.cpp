@@ -79,6 +79,7 @@ FomodInstallerDialog::FomodInstallerDialog(const GuessedValue<QString> &modName,
     m_FileSystemItemSequence()
 {
   ui->setupUi(this);
+  setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
   setWindowTitle(modName);
 
   updateNameEdit();
