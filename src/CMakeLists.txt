@@ -1,4 +1,4 @@
-CMAKE_MINIMUM_REQUIRED (VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED (VERSION 2.8.11)
 
 CMAKE_POLICY(SET CMP0020 NEW)
 CMAKE_POLICY(SET CMP0043 NEW)
@@ -29,10 +29,11 @@ SET(default_project_path "${CMAKE_SOURCE_DIR}/..")
 GET_FILENAME_COMPONENT(${default_project_path} ${default_project_path} REALPATH)
 
 SET(project_path "${default_project_path}" CACHE PATH "path to the other mo projects")
+SET(lib_path "${project_path}/../../install/libs")
 
 INCLUDE_DIRECTORIES(${project_path}/uibase/src
                     ${project_path}/game_features/src)
-LINK_DIRECTORIES(${project_path}/uibase/build/src)
+LINK_DIRECTORIES(${lib_path})
 
 
 ADD_LIBRARY(${PROJ_NAME} SHARED ${${PROJ_NAME}_HDRS} ${${PROJ_NAME}_SRCS} ${${PROJ_NAME}_UIHDRS} ${${PROJ_NAME}_translations_qm})
@@ -54,11 +55,10 @@ IF (NOT "${OPTIMIZE_LINK_FLAGS}" STREQUAL "")
   SET_TARGET_PROPERTIES(${PROJ_NAME} PROPERTIES LINK_FLAGS_RELWITHDEBINFO ${OPTIMIZE_LINK_FLAGS})
 ENDIF()
 
-QT5_USE_MODULES(${PROJ_NAME} Widgets)
-
 ###############
 ## Installation
 
 INSTALL(TARGETS ${PROJ_NAME}
         RUNTIME DESTINATION bin/plugins)
-INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJ_NAME}.pdb DESTINATION pdb)
+INSTALL(FILES $<TARGET_PDB_FILE:${PROJ_NAME}>
+        DESTINATION pdb)
