@@ -54,11 +54,11 @@ class XmlReader;
 
 class IConditionTester {
 public:
-  virtual bool testCondition(int maxIndex, const ValueCondition *condition) const = 0;
-  virtual bool testCondition(int maxIndex, const ConditionFlag *condition) const = 0;
-  virtual bool testCondition(int maxIndex, const SubCondition *condition) const = 0;
-  virtual bool testCondition(int maxIndex, const FileCondition *condition) const = 0;
-  virtual bool testCondition(int maxIndex, const VersionCondition *condition) const = 0;
+  virtual std::pair<bool, QString> testCondition(int maxIndex, const ValueCondition *condition) const = 0;
+  virtual std::pair<bool, QString> testCondition(int maxIndex, const ConditionFlag *condition) const = 0;
+  virtual std::pair<bool, QString> testCondition(int maxIndex, const SubCondition *condition) const = 0;
+  virtual std::pair<bool, QString> testCondition(int maxIndex, const FileCondition *condition) const = 0;
+  virtual std::pair<bool, QString> testCondition(int maxIndex, const VersionCondition *condition) const = 0;
 };
 
 
@@ -70,7 +70,7 @@ enum ConditionOperator {
 class Condition {
 public:
   Condition() { }
-  virtual bool test(int maxIndex, const IConditionTester *tester) const = 0;
+  virtual std::pair<bool, QString> test(int maxIndex, const IConditionTester *tester) const = 0;
 private:
   Condition &operator=(const Condition&) = delete;
 };
@@ -79,7 +79,7 @@ class ConditionFlag : public Condition {
 public:
   ConditionFlag() : Condition(), m_Name(), m_Value() {}
   ConditionFlag(const QString &name, const QString &value) : Condition(), m_Name(name), m_Value(value) { }
-  virtual bool test(int maxIndex, const IConditionTester *tester) const { return tester->testCondition(maxIndex, this); }
+  virtual std::pair<bool, QString> test(int maxIndex, const IConditionTester *tester) const { return tester->testCondition(maxIndex, this); }
   QString m_Name;
   QString m_Value;
 };
@@ -89,7 +89,7 @@ class ValueCondition : public Condition {
 public:
   ValueCondition() : Condition(), m_Name(), m_Value() {}
   ValueCondition(const QString &name, const QString &value) : Condition(), m_Name(name), m_Value(value) { }
-  virtual bool test(int maxIndex, const IConditionTester *tester) const { return tester->testCondition(maxIndex, this); }
+  virtual std::pair<bool, QString> test(int maxIndex, const IConditionTester *tester) const { return tester->testCondition(maxIndex, this); }
   QString m_Name;
   QString m_Value;
 };
@@ -99,7 +99,7 @@ class FileCondition : public Condition {
 public:
   FileCondition() : Condition(), m_File(), m_State() {}
   FileCondition(const QString &file, const QString &state) : Condition(), m_File(file), m_State(state) {}
-  virtual bool test(int maxIndex, const IConditionTester *tester) const { return tester->testCondition(maxIndex, this); }
+  virtual std::pair<bool, QString> test(int maxIndex, const IConditionTester *tester) const { return tester->testCondition(maxIndex, this); }
   QString m_File;
   QString m_State;
 };
@@ -107,7 +107,7 @@ Q_DECLARE_METATYPE(FileCondition)
 
 class SubCondition : public Condition {
 public:
-  virtual bool test(int maxIndex, const IConditionTester *tester) const { return tester->testCondition(maxIndex, this); }
+  virtual std::pair<bool, QString> test(int maxIndex, const IConditionTester *tester) const { return tester->testCondition(maxIndex, this); }
   ConditionOperator m_Operator;
   std::vector<Condition*> m_Conditions;
 };
@@ -118,7 +118,7 @@ public:
   enum Type { v_Game, v_FOMM, v_FOSE };
   VersionCondition() : Condition(), m_Type(), m_RequiredVersion() {}
   VersionCondition(Type type, const QString &requiredVersion) : Condition(), m_Type(type), m_RequiredVersion(requiredVersion) { }
-  virtual bool test(int maxIndex, const IConditionTester *tester) const { return tester->testCondition(maxIndex, this); }
+  virtual std::pair<bool, QString> test(int maxIndex, const IConditionTester *tester) const { return tester->testCondition(maxIndex, this); }
   Type m_Type;
   QString m_RequiredVersion;
 };
@@ -332,12 +332,12 @@ private:
   void parseModuleConfig(XmlReader &data);
   void highlightControl(QAbstractButton *button);
 
-  bool testCondition(int maxIndex, const QString &flag, const QString &value) const;
-  virtual bool testCondition(int maxIndex, const ValueCondition *condition) const;
-  virtual bool testCondition(int maxIndex, const ConditionFlag *condition) const;
-  virtual bool testCondition(int maxIndex, const SubCondition *condition) const;
-  virtual bool testCondition(int maxIndex, const FileCondition *condition) const;
-  virtual bool testCondition(int maxIndex, const VersionCondition *condition) const;
+  std::pair<bool, QString> testCondition(int maxIndex, const QString &flag, const QString &value) const;
+  virtual std::pair<bool, QString> testCondition(int maxIndex, const ValueCondition *condition) const;
+  virtual std::pair<bool, QString> testCondition(int maxIndex, const ConditionFlag *condition) const;
+  virtual std::pair<bool, QString> testCondition(int maxIndex, const SubCondition *condition) const;
+  virtual std::pair<bool, QString> testCondition(int maxIndex, const FileCondition *condition) const;
+  virtual std::pair<bool, QString> testCondition(int maxIndex, const VersionCondition *condition) const;
   bool testVisible(int pageIndex) const;
   bool nextPage();
   void activateCurrentPage();

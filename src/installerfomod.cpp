@@ -239,7 +239,7 @@ IPluginInstaller::EInstallResult InstallerFomod::install(GuessedValue<QString> &
     }
   } catch (const std::exception &e) {
     reportError(tr("Installation as fomod failed: %1").arg(e.what()));
-    return IPluginInstaller::RESULT_MANUALREQUESTED;
+    return IPluginInstaller::RESULT_FAILED;
   }
 }
 

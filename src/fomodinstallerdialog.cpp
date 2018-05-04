@@ -436,30 +436,35 @@ bool FomodInstallerDialog::copyFileIterator(DirectoryTree *sourceTree, Directory
 }
 
 
-bool FomodInstallerDialog::testCondition(int maxIndex, const ValueCondition *valCondition) const
+std::pair<bool, QString> FomodInstallerDialog::testCondition(int maxIndex, const ValueCondition *valCondition) const
 {
   return testCondition(maxIndex, valCondition->m_Name, valCondition->m_Value);
 }
 
-bool FomodInstallerDialog::testCondition(int maxIndex, const ConditionFlag *conditionFlag) const
+std::pair<bool, QString> FomodInstallerDialog::testCondition(int maxIndex, const ConditionFlag *conditionFlag) const
 {
   return testCondition(maxIndex, conditionFlag->m_Name, conditionFlag->m_Value);
 }
 
-bool FomodInstallerDialog::testCondition(int maxIndex, const SubCondition *condition) const
+std::pair<bool, QString> FomodInstallerDialog::testCondition(int maxIndex, const SubCondition *condition) const
 {
   ConditionOperator op = condition->m_Operator;
   for (const Condition *cond : condition->m_Conditions) {
-    bool conditionMatches = cond->test(maxIndex, this);
-    if (op == OP_OR && conditionMatches) {
-      return true;
+    std::pair<bool, QString> conditionMatches = cond->test(maxIndex, this);
+    if (!conditionMatches.first)
+      qWarning() << conditionMatches.second;
+    if (op == OP_OR && conditionMatches.first) {
+      return std::make_pair<bool, QString>(true, tr("At least one condition was successful in an 'OR' clause!"));
     }
-    if (op == OP_AND && !conditionMatches) {
-      return false;
+    if (op == OP_AND && !conditionMatches.first) {
+      return conditionMatches;
     }
   }
   //If we get through here, everything matched (AND) or nothing matched (OR)
-  return op == OP_AND;
+  if (op == OP_AND)
+    return std::make_pair<bool, QString>(true, tr("All conditions were successful in an 'AND' clause!"));
+  else
+    return std::make_pair<bool, QString>(false, tr("No conditions were successful in an 'OR' clause!"));
 }
 
 QString FomodInstallerDialog::toString(IPluginList::PluginStates state)
@@ -470,9 +475,15 @@ QString FomodInstallerDialog::toString(IPluginList::PluginStates state)
   throw MyException(tr("invalid plugin state %1").arg(state));
 }
 
-bool FomodInstallerDialog::testCondition(int, const FileCondition *condition) const
+std::pair<bool, QString> FomodInstallerDialog::testCondition(int, const FileCondition *condition) const
 {
-  return toString(m_FileCheck(condition->m_File)) == condition->m_State;
+  QString result = toString(m_FileCheck(condition->m_File));
+  if (result == condition->m_State)
+    return std::make_pair<bool, QString>(true, tr("Success: The file '%1' was marked %2.")
+      .arg(condition->m_File).arg(condition->m_State));
+  else
+    return std::make_pair<bool, QString>(false, tr("Missing requirement: The file '%1' should be %2, but was %3!")
+      .arg(condition->m_File).arg(condition->m_State.toLower()).arg(result.toLower()));
 }
 
 namespace {
@@ -505,30 +516,43 @@ bool operator<=(Version const &lhs, Version const &rhs)
 }
 
 }
-bool FomodInstallerDialog::testCondition(int, const VersionCondition *condition) const
+
+std::pair<bool, QString> FomodInstallerDialog::testCondition(int, const VersionCondition *condition) const
 {
   QString version;
   MOBase::IPluginGame const *game = m_MoInfo->managedGame();
 
+  QString typeName;
   switch (condition->m_Type) {
     case VersionCondition::v_Game: {
       version = game->gameVersion();
+      typeName = game->gameName();
     } break;
 
     case VersionCondition::v_FOMM:
       //We should use m_MoInfo->appVersion() but then we wouldn't be able to
       //install anything as MO is at 0.3.11 at the time of writing.
       version = "0.13.21";
+      typeName = "FOMM (FOMOD syntax)";
       break;
 
     case VersionCondition::v_FOSE: {
       ScriptExtender *extender = game->feature<ScriptExtender>();
       if (extender != nullptr) {
         version = extender->getExtenderVersion();
+        typeName = extender->BinaryName();
+      } else {
+        version = "not installed";
+        typeName = "the script extender";
       }
     } break;
   }
-  return Version(condition->m_RequiredVersion) <= Version(version);
+  if (Version(condition->m_RequiredVersion) <= Version(version))
+    return std::make_pair<bool, QString>(true, tr("Success: The required version of %1 is %2, and was detected as %3.")
+      .arg(typeName).arg(condition->m_RequiredVersion).arg(version));
+  else
+    return std::make_pair<bool, QString>(false, tr("Missing requirement: The required version of %1 is %2, but was detected as %3.")
+      .arg(typeName).arg(condition->m_RequiredVersion).arg(version));
 }
 
 DirectoryTree *FomodInstallerDialog::updateTree(DirectoryTree *tree)
@@ -543,7 +567,8 @@ DirectoryTree *FomodInstallerDialog::updateTree(DirectoryTree *tree)
   // enable all conditional file installs (files programatically selected by conditions instead of a user selection. usually dependencies)
   for (ConditionalInstall &cond : m_ConditionalInstalls) {
     SubCondition *condition = &cond.m_Condition;
-    if (condition->test(ui->stepsStack->count(), this)) {
+    std::pair<bool, QString> result = condition->test(ui->stepsStack->count(), this);
+    if (result.first) {
       for (FileDescriptor *file : cond.m_Files) {
         descriptorList.push_back(file);
       }
@@ -875,7 +900,7 @@ FomodInstallerDialog::PluginType FomodInstallerDialog::getPluginDependencyType(i
 {
   if (info.m_DependencyPatterns.size() != 0) {
     for (const DependencyPattern &pattern : info.m_DependencyPatterns) {
-      if (testCondition(page, &pattern.condition)) {
+      if (testCondition(page, &pattern.condition).first) {
           return pattern.type;
       }
     }
@@ -1215,9 +1240,10 @@ void FomodInstallerDialog::readModuleConfiguration(XmlReader &reader)
     } else if (name == "moduleDependencies") {
       SubCondition condition;
       readCompositeDependency(reader, condition);
-      if (!testCondition(-1, &condition)) {
+      std::pair<bool, QString> result = testCondition(-1, &condition);
+      if (!result.first) {
         //TODO Better messages?
-        throw MyException("This module is not usable with this setup");
+        throw MyException(result.second);
       }
     } else if (name == "requiredInstallFiles") {
       readFileList(reader, m_RequiredFiles);
@@ -1288,7 +1314,7 @@ void FomodInstallerDialog::activateCurrentPage()
   updateNextbtnText();
 }
 
-bool FomodInstallerDialog::testCondition(int maxIndex, const QString &flag, const QString &value) const
+std::pair<bool, QString> FomodInstallerDialog::testCondition(int maxIndex, const QString &flag, const QString &value) const
 {
   //FIXME Review this and see if we can store the visible and evaluated variables for each
   //page and cache like that. This would make me happier (if no one else) about the results
@@ -1309,7 +1335,10 @@ bool FomodInstallerDialog::testCondition(int maxIndex, const QString &flag, cons
             for (QVariant const &variant : conditionFlags) {
               ConditionFlag condition = variant.value<ConditionFlag>();
               if (condition.m_Name == flag) {
-                return condition.m_Value == value;
+                if (condition.m_Value == value)
+                  return std::make_pair(true, tr("The flag '%1' matched '%2'").arg(condition.m_Name).arg(condition.m_Value));
+                else
+                  return std::make_pair(false, tr("The flag '%1' did not match '%2'").arg(condition.m_Name).arg(condition.m_Value));
               }
             }
           }
@@ -1317,7 +1346,9 @@ bool FomodInstallerDialog::testCondition(int maxIndex, const QString &flag, cons
       }
     }
   }
-  return value.isEmpty();
+  if (value.isEmpty())
+    return std::make_pair(true, tr("The condition was not matched and is empty."));
+  return std::make_pair(false, tr("The value exists but was not matched."));
 }
 
 
@@ -1333,7 +1364,7 @@ bool FomodInstallerDialog::testVisible(int pageIndex) const
   QVariant subcond = page->property("conditional");
   if (subcond.isValid()) {
     SubCondition subc = subcond.value<SubCondition>();
-    return testCondition(pageIndex, &subc);
+    return testCondition(pageIndex, &subc).first;
   }
   return true;
 }
