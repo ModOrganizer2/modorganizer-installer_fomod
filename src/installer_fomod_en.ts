@@ -39,19 +39,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.ui" line="193"/>
+        <location filename="fomodinstallerdialog.ui" line="196"/>
         <source>Back</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.ui" line="200"/>
+        <location filename="fomodinstallerdialog.ui" line="206"/>
         <location filename="fomodinstallerdialog.cpp" line="1460"/>
         <location filename="fomodinstallerdialog.cpp" line="1600"/>
         <source>Next</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.ui" line="207"/>
+        <location filename="fomodinstallerdialog.ui" line="213"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
