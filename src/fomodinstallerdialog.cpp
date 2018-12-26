@@ -263,7 +263,7 @@ void FomodInstallerDialog::initData(IOrganizer *moInfo)
 
   QImage screenshot(QDir::tempPath() + "/" + m_FomodPath + "/fomod/screenshot.png");
   if (!screenshot.isNull()) {
-    ui->screenshotLabel->setScalablePixmap(QPixmap::fromImage(screenshot));
+    ui->screenshotLabel->setScalableImage(screenshot);
   }
 
   readModuleConfigXml();
@@ -617,12 +617,15 @@ void FomodInstallerDialog::highlightControl(QAbstractButton *button)
     QString screenshotFileName = screenshotName.toString();
     if (!screenshotFileName.isEmpty()) {
       QString temp = QDir::tempPath() + "/" + m_FomodPath + "/" + QDir::fromNativeSeparators(screenshotFileName);
-      QImage screenshot(temp);
-      if (screenshot.isNull()) {
-        qWarning(">%s< is a null image", qPrintable(temp));
+      if (temp.endsWith(".gif", Qt::CaseInsensitive)) {
+        ui->screenshotLabel->setScalableMovie(temp);
       } else {
-        QPixmap tempPix = QPixmap::fromImage(screenshot);
-        ui->screenshotLabel->setScalablePixmap(tempPix);
+        QImage screenshot(temp);
+        if (screenshot.isNull()) {
+          qWarning(">%s< is a null image", qPrintable(temp));
+        } else {
+          ui->screenshotLabel->setScalableImage(screenshot);
+        }
       }
     } else {
       ui->screenshotLabel->setPixmap(QPixmap());
