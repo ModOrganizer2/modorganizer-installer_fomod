@@ -205,6 +205,8 @@ public:
 
   bool hasOptions();
 
+  void transformToSmallInstall();
+
 protected:
 
   virtual bool eventFilter(QObject *object, QEvent *event);

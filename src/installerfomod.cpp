@@ -222,7 +222,11 @@ IPluginInstaller::EInstallResult InstallerFomod::install(GuessedValue<QString> &
 
     manager()->setURL(dialog.getURL());
 
-    if (!dialog.hasOptions() || (dialog.exec() == QDialog::Accepted)) {
+    if (!dialog.hasOptions()) {
+      dialog.transformToSmallInstall();
+    }
+
+    if (dialog.exec() == QDialog::Accepted) {
       modName.update(dialog.getName(), GUESS_USER);
       DirectoryTree *newTree = dialog.updateTree(&tree);
       tree = *newTree;

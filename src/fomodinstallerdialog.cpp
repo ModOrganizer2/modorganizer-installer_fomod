@@ -98,6 +98,15 @@ bool FomodInstallerDialog::hasOptions()
 }
 
 
+void FomodInstallerDialog::transformToSmallInstall()
+{
+  ui->descriptionText->setVisible(false);
+  ui->screenshotLabel->setVisible(false);
+  ui->stepsStack->setVisible(false);
+  adjustSize();
+}
+
+
 void FomodInstallerDialog::updateNameEdit()
 {
   ui->nameCombo->clear();
