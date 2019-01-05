@@ -631,7 +631,7 @@ void FomodInstallerDialog::highlightControl(QAbstractButton *button)
       } else {
         QImage screenshot(temp);
         if (screenshot.isNull()) {
-          qWarning(">%s< is a null image", qPrintable(temp));
+          qWarning(">%s< is a null image", qUtf8Printable(temp));
         } else {
           ui->screenshotLabel->setScalableImage(screenshot);
         }
