@@ -133,7 +133,7 @@ int FomodInstallerDialog::bomOffset(const QByteArray &buffer)
 
 struct XmlParseError : std::runtime_error {
   XmlParseError(const QString &message)
-    : std::runtime_error(message.toUtf8().constData()) {}
+    : std::runtime_error(qUtf8Printable(message)) {}
 };
 
 QByteArray skipXmlHeader(QIODevice &file)
@@ -390,7 +390,7 @@ void FomodInstallerDialog::copyLeaf(DirectoryTree::Node *sourceTree, const QStri
     }
   }
   if (!found) {
-    qCritical("%s not found!", sourceName.toUtf8().constData());
+    qCritical("%s not found!", qUtf8Printable(sourceName));
   }
 }
 
@@ -439,7 +439,7 @@ bool FomodInstallerDialog::copyFileIterator(DirectoryTree *sourceTree, Directory
     return true;
   } catch (const MyException &e) {
     qCritical("failed to extract %s to %s: %s",
-              source.toUtf8().constData(), destination.toUtf8().constData(), e.what());
+              qUtf8Printable(source), qUtf8Printable(destination), e.what());
     return false;
   }
 }
@@ -738,7 +738,7 @@ FomodInstallerDialog::PluginType FomodInstallerDialog::getPluginType(const QStri
   } else if (typeString == "CouldBeUsable") {
     return FomodInstallerDialog::TYPE_COULDBEUSABLE;
   } else {
-    qCritical("invalid plugin type %s", typeString.toUtf8().constData());
+    qCritical("invalid plugin type %s", qUtf8Printable(typeString));
     return FomodInstallerDialog::TYPE_OPTIONAL;
   }
 }
