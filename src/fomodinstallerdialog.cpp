@@ -859,7 +859,7 @@ void FomodInstallerDialog::readConditionFlagList(XmlReader &reader, ConditionFla
   while (reader.getNextElement(self)) {
     if (reader.name() == "flag") {
       QString name = reader.attributes().value("name").toString();
-      QString content = reader.getText();
+      QString content = reader.getText().trimmed();
       condflags.push_back(ConditionFlag(name, content));
     } else {
       reader.unexpected();
