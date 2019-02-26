@@ -495,7 +495,7 @@ std::pair<bool, QString> FomodInstallerDialog::testCondition(int, const FileCond
   QString result = toString(m_FileCheck(condition->m_File));
   if (result == condition->m_State)
     return std::make_pair<bool, QString>(true, tr("Success: The file '%1' was marked %2.")
-      .arg(condition->m_File).arg(condition->m_State.toLower()));
+      .arg(condition->m_File).arg(trPluginStates.at(condition->m_State).toLower()));
   else
     return std::make_pair<bool, QString>(false, tr("Missing requirement: The file '%1' should be %2, but was %3!")
       .arg(condition->m_File).arg(trPluginStates.at(condition->m_State).toLower()).arg(trPluginStates.at(result).toLower()));
