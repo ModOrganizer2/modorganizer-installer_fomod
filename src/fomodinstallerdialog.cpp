@@ -486,13 +486,19 @@ QString FomodInstallerDialog::toString(IPluginList::PluginStates state)
 
 std::pair<bool, QString> FomodInstallerDialog::testCondition(int, const FileCondition *condition) const
 {
+  static const std::map<QString, QString> trPluginStates = {
+    {"Missing", tr("Missing")},
+    {"Inactive", tr("Inactive")},
+    {"Active", tr("Active")}
+  };
+
   QString result = toString(m_FileCheck(condition->m_File));
   if (result == condition->m_State)
     return std::make_pair<bool, QString>(true, tr("Success: The file '%1' was marked %2.")
-      .arg(condition->m_File).arg(condition->m_State));
+      .arg(condition->m_File).arg(condition->m_State.toLower()));
   else
     return std::make_pair<bool, QString>(false, tr("Missing requirement: The file '%1' should be %2, but was %3!")
-      .arg(condition->m_File).arg(condition->m_State.toLower()).arg(result.toLower()));
+      .arg(condition->m_File).arg(trPluginStates.at(condition->m_State).toLower()).arg(trPluginStates.at(result).toLower()));
 }
 
 namespace {
