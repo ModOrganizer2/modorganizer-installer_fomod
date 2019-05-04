@@ -46,7 +46,7 @@ QString InstallerFomod::description() const
 
 VersionInfo InstallerFomod::version() const
 {
-  return VersionInfo(1, 5, 4, VersionInfo::RELEASE_FINAL);
+  return VersionInfo(1, 6, 0, VersionInfo::RELEASE_FINAL);
 }
 
 bool InstallerFomod::isActive() const
@@ -222,7 +222,11 @@ IPluginInstaller::EInstallResult InstallerFomod::install(GuessedValue<QString> &
 
     manager()->setURL(dialog.getURL());
 
-    if (!dialog.hasOptions() || (dialog.exec() == QDialog::Accepted)) {
+    if (!dialog.hasOptions()) {
+      dialog.transformToSmallInstall();
+    }
+
+    if (dialog.exec() == QDialog::Accepted) {
       modName.update(dialog.getName(), GUESS_USER);
       DirectoryTree *newTree = dialog.updateTree(&tree);
       tree = *newTree;

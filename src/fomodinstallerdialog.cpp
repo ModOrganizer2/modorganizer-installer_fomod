@@ -98,6 +98,15 @@ bool FomodInstallerDialog::hasOptions()
 }
 
 
+void FomodInstallerDialog::transformToSmallInstall()
+{
+  ui->descriptionText->setVisible(false);
+  ui->screenshotLabel->setVisible(false);
+  ui->stepsStack->setVisible(false);
+  adjustSize();
+}
+
+
 void FomodInstallerDialog::updateNameEdit()
 {
   ui->nameCombo->clear();
@@ -124,7 +133,7 @@ int FomodInstallerDialog::bomOffset(const QByteArray &buffer)
 
 struct XmlParseError : std::runtime_error {
   XmlParseError(const QString &message)
-    : std::runtime_error(message.toUtf8().constData()) {}
+    : std::runtime_error(qUtf8Printable(message)) {}
 };
 
 QByteArray skipXmlHeader(QIODevice &file)
@@ -263,7 +272,7 @@ void FomodInstallerDialog::initData(IOrganizer *moInfo)
 
   QImage screenshot(QDir::tempPath() + "/" + m_FomodPath + "/fomod/screenshot.png");
   if (!screenshot.isNull()) {
-    ui->screenshotLabel->setScalablePixmap(QPixmap::fromImage(screenshot));
+    ui->screenshotLabel->setScalableImage(screenshot);
   }
 
   readModuleConfigXml();
@@ -381,7 +390,7 @@ void FomodInstallerDialog::copyLeaf(DirectoryTree::Node *sourceTree, const QStri
     }
   }
   if (!found) {
-    qCritical("%s not found!", sourceName.toUtf8().constData());
+    qCritical("%s not found!", qUtf8Printable(sourceName));
   }
 }
 
@@ -430,7 +439,7 @@ bool FomodInstallerDialog::copyFileIterator(DirectoryTree *sourceTree, Directory
     return true;
   } catch (const MyException &e) {
     qCritical("failed to extract %s to %s: %s",
-              source.toUtf8().constData(), destination.toUtf8().constData(), e.what());
+              qUtf8Printable(source), qUtf8Printable(destination), e.what());
     return false;
   }
 }
@@ -477,13 +486,19 @@ QString FomodInstallerDialog::toString(IPluginList::PluginStates state)
 
 std::pair<bool, QString> FomodInstallerDialog::testCondition(int, const FileCondition *condition) const
 {
+  static const std::map<QString, QString> trPluginStates = {
+    {"Missing", tr("Missing")},
+    {"Inactive", tr("Inactive")},
+    {"Active", tr("Active")}
+  };
+
   QString result = toString(m_FileCheck(condition->m_File));
   if (result == condition->m_State)
     return std::make_pair<bool, QString>(true, tr("Success: The file '%1' was marked %2.")
-      .arg(condition->m_File).arg(condition->m_State));
+      .arg(condition->m_File).arg(trPluginStates.at(condition->m_State).toLower()));
   else
     return std::make_pair<bool, QString>(false, tr("Missing requirement: The file '%1' should be %2, but was %3!")
-      .arg(condition->m_File).arg(condition->m_State.toLower()).arg(result.toLower()));
+      .arg(condition->m_File).arg(trPluginStates.at(condition->m_State).toLower()).arg(trPluginStates.at(result).toLower()));
 }
 
 namespace {
@@ -617,12 +632,15 @@ void FomodInstallerDialog::highlightControl(QAbstractButton *button)
     QString screenshotFileName = screenshotName.toString();
     if (!screenshotFileName.isEmpty()) {
       QString temp = QDir::tempPath() + "/" + m_FomodPath + "/" + QDir::fromNativeSeparators(screenshotFileName);
-      QImage screenshot(temp);
-      if (screenshot.isNull()) {
-        qWarning(">%s< is a null image", qPrintable(temp));
+      if (temp.endsWith(".gif", Qt::CaseInsensitive)) {
+        ui->screenshotLabel->setScalableMovie(temp);
       } else {
-        QPixmap tempPix = QPixmap::fromImage(screenshot);
-        ui->screenshotLabel->setScalablePixmap(tempPix);
+        QImage screenshot(temp);
+        if (screenshot.isNull()) {
+          qWarning(">%s< is a null image", qUtf8Printable(temp));
+        } else {
+          ui->screenshotLabel->setScalableImage(screenshot);
+        }
       }
     } else {
       ui->screenshotLabel->setPixmap(QPixmap());
@@ -726,7 +744,7 @@ FomodInstallerDialog::PluginType FomodInstallerDialog::getPluginType(const QStri
   } else if (typeString == "CouldBeUsable") {
     return FomodInstallerDialog::TYPE_COULDBEUSABLE;
   } else {
-    qCritical("invalid plugin type %s", typeString.toUtf8().constData());
+    qCritical("invalid plugin type %s", qUtf8Printable(typeString));
     return FomodInstallerDialog::TYPE_OPTIONAL;
   }
 }
@@ -847,7 +865,7 @@ void FomodInstallerDialog::readConditionFlagList(XmlReader &reader, ConditionFla
   while (reader.getNextElement(self)) {
     if (reader.name() == "flag") {
       QString name = reader.attributes().value("name").toString();
-      QString content = reader.getText();
+      QString content = reader.getText().trimmed();
       condflags.push_back(ConditionFlag(name, content));
     } else {
       reader.unexpected();

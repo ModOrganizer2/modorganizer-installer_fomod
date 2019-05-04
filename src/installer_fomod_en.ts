@@ -45,8 +45,8 @@
     </message>
     <message>
         <location filename="fomodinstallerdialog.ui" line="206"/>
-        <location filename="fomodinstallerdialog.cpp" line="1460"/>
-        <location filename="fomodinstallerdialog.cpp" line="1600"/>
+        <location filename="fomodinstallerdialog.cpp" line="1478"/>
+        <location filename="fomodinstallerdialog.cpp" line="1618"/>
         <source>Next</source>
         <translation type="unfinished"></translation>
     </message>
@@ -56,143 +56,158 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="206"/>
-        <location filename="fomodinstallerdialog.cpp" line="250"/>
+        <location filename="fomodinstallerdialog.cpp" line="215"/>
+        <location filename="fomodinstallerdialog.cpp" line="259"/>
         <source>Failed to parse ModuleConfig.xml. See console for details</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="217"/>
+        <location filename="fomodinstallerdialog.cpp" line="226"/>
         <source>ModuleConfig.xml missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="457"/>
+        <location filename="fomodinstallerdialog.cpp" line="466"/>
         <source>At least one condition was successful in an &apos;OR&apos; clause!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="465"/>
+        <location filename="fomodinstallerdialog.cpp" line="474"/>
         <source>All conditions were successful in an &apos;AND&apos; clause!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="467"/>
+        <location filename="fomodinstallerdialog.cpp" line="476"/>
         <source>No conditions were successful in an &apos;OR&apos; clause!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="475"/>
+        <location filename="fomodinstallerdialog.cpp" line="484"/>
         <source>invalid plugin state %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="482"/>
+        <location filename="fomodinstallerdialog.cpp" line="490"/>
+        <source>Missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="fomodinstallerdialog.cpp" line="491"/>
+        <source>Inactive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="fomodinstallerdialog.cpp" line="492"/>
+        <source>Active</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="fomodinstallerdialog.cpp" line="497"/>
         <source>Success: The file &apos;%1&apos; was marked %2.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="485"/>
+        <location filename="fomodinstallerdialog.cpp" line="500"/>
         <source>Missing requirement: The file &apos;%1&apos; should be %2, but was %3!</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="551"/>
+        <location filename="fomodinstallerdialog.cpp" line="566"/>
         <source>Success: The required version of %1 is %2, and was detected as %3.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="554"/>
+        <location filename="fomodinstallerdialog.cpp" line="569"/>
         <source>Missing requirement: The required version of %1 is %2, but was detected as %3.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="671"/>
+        <location filename="fomodinstallerdialog.cpp" line="689"/>
         <source>&lt;a href=&quot;%1&quot;&gt;Link&lt;/a&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="693"/>
+        <location filename="fomodinstallerdialog.cpp" line="711"/>
         <source>unsupported order type %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="711"/>
+        <location filename="fomodinstallerdialog.cpp" line="729"/>
         <source>unsupported group type %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="971"/>
+        <location filename="fomodinstallerdialog.cpp" line="989"/>
         <source>All components in this group are required</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="1012"/>
+        <location filename="fomodinstallerdialog.cpp" line="1030"/>
         <source>None</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="1041"/>
+        <location filename="fomodinstallerdialog.cpp" line="1059"/>
         <source>Select one or more of these options:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="1339"/>
+        <location filename="fomodinstallerdialog.cpp" line="1357"/>
         <source>The flag &apos;%1&apos; matched &apos;%2&apos;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="1341"/>
+        <location filename="fomodinstallerdialog.cpp" line="1359"/>
         <source>The flag &apos;%1&apos; did not match &apos;%2&apos;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="1350"/>
+        <location filename="fomodinstallerdialog.cpp" line="1368"/>
         <source>The condition was not matched and is empty.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="1351"/>
+        <location filename="fomodinstallerdialog.cpp" line="1369"/>
         <source>The value exists but was not matched.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="1432"/>
+        <location filename="fomodinstallerdialog.cpp" line="1450"/>
         <source>Disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="1434"/>
+        <location filename="fomodinstallerdialog.cpp" line="1452"/>
         <source>This button is disabled because the following group(s) need a selection: </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="1460"/>
+        <location filename="fomodinstallerdialog.cpp" line="1478"/>
         <source>Install</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="1520"/>
+        <location filename="fomodinstallerdialog.cpp" line="1538"/>
         <source>This component is required</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="1526"/>
+        <location filename="fomodinstallerdialog.cpp" line="1544"/>
         <source>It is recommended you enable this component</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="1532"/>
+        <location filename="fomodinstallerdialog.cpp" line="1550"/>
         <source>Optional component</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="1537"/>
+        <location filename="fomodinstallerdialog.cpp" line="1555"/>
         <source>This component is not usable in combination with other installed plugins</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="fomodinstallerdialog.cpp" line="1545"/>
+        <location filename="fomodinstallerdialog.cpp" line="1563"/>
         <source>You may be experiencing instability in combination with other installed plugins</source>
         <translation type="unfinished"></translation>
     </message>
@@ -205,23 +220,23 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installerfomod.cpp" line="241"/>
+        <location filename="installerfomod.cpp" line="245"/>
         <source>Installation as fomod failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installerfomod.cpp" line="265"/>
+        <location filename="installerfomod.cpp" line="269"/>
         <source>image formats not supported.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installerfomod.cpp" line="267"/>
-        <location filename="installerfomod.cpp" line="278"/>
+        <location filename="installerfomod.cpp" line="271"/>
+        <location filename="installerfomod.cpp" line="282"/>
         <source>invalid problem key %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installerfomod.cpp" line="275"/>
+        <location filename="installerfomod.cpp" line="279"/>
         <source>This indicates that files from dlls/imageformats are missing from your MO installation or outdated. Images in installers may not be displayed. Please re-install MO</source>
         <translation type="unfinished"></translation>
     </message>
