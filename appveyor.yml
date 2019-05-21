@@ -14,11 +14,11 @@ build_script:
 
     C:\Python37-x64\python.exe unimake.py -d c:\projects\modorganizer-build -s Appveyor_Build=True %APPVEYOR_PROJECT_NAME%
 artifacts:
-- path: vsbuild\src\RelWithDebInfo\installer_fomod.dll
+- path: ..\..\..\install\bin\plugins\installer_fomod.dll
   name: installer_fomod_dll
-- path: vsbuild\src\RelWithDebInfo\installer_fomod.pdb
+- path: ..\..\..\install\pdb\installer_fomod.pdb
   name: installer_fomod_pdb
-- path: vsbuild\src\RelWithDebInfo\installer_fomod.lib
+- path: ..\..\..\install\libs\installer_fomod.lib
   name: installer_fomod_lib
 on_success:
   - ps: Set-Location -Path $env:APPVEYOR_BUILD_FOLDER
