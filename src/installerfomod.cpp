@@ -225,7 +225,8 @@ IPluginInstaller::EInstallResult InstallerFomod::install(GuessedValue<QString> &
               dialog.transformToSmallInstall();
           }
 
-          if (dialog.exec() == QDialog::Accepted) {
+          auto result = dialog.exec();
+          if (result == QDialog::Accepted) {
               modName.update(dialog.getName(), GUESS_USER);
               DirectoryTree* newTree = dialog.updateTree(&tree);
               tree = *newTree;
@@ -237,8 +238,9 @@ IPluginInstaller::EInstallResult InstallerFomod::install(GuessedValue<QString> &
               if (dialog.manualRequested()) {
                   modName.update(dialog.getName(), GUESS_USER);
                   return IPluginInstaller::RESULT_MANUALREQUESTED;
-              }
-              else {
+              } else if (result == QDialog::Rejected) {
+                  return IPluginInstaller::RESULT_CANCELED;
+              } else {
                   return IPluginInstaller::RESULT_FAILED;
               }
           }

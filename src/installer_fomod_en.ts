@@ -220,23 +220,23 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installerfomod.cpp" line="247"/>
+        <location filename="installerfomod.cpp" line="249"/>
         <source>Installation as fomod failed: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installerfomod.cpp" line="273"/>
+        <location filename="installerfomod.cpp" line="275"/>
         <source>image formats not supported.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installerfomod.cpp" line="275"/>
-        <location filename="installerfomod.cpp" line="286"/>
+        <location filename="installerfomod.cpp" line="277"/>
+        <location filename="installerfomod.cpp" line="288"/>
         <source>invalid problem key %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="installerfomod.cpp" line="283"/>
+        <location filename="installerfomod.cpp" line="285"/>
         <source>This indicates that files from dlls/imageformats are missing from your MO installation or outdated. Images in installers may not be displayed. Please re-install MO</source>
         <translation type="unfinished"></translation>
     </message>
