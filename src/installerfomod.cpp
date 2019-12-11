@@ -205,46 +205,50 @@ IPluginInstaller::EInstallResult InstallerFomod::install(GuessedValue<QString> &
                                                          QString &version, int &modID)
 {
   QStringList installerFiles = buildFomodTree(tree);
-  manager()->extractFiles(installerFiles, false);
+  if (!manager()->extractFiles(installerFiles, false).isEmpty()) {
+      try {
+          const DirectoryTree* fomodTree = findFomodDirectory(&tree);
 
-  try {
-    const DirectoryTree *fomodTree = findFomodDirectory(&tree);
+          QString fomodPath = fomodTree->getParent()->getFullPath();
+          FomodInstallerDialog dialog(modName, fomodPath, std::bind(&InstallerFomod::fileState, this, std::placeholders::_1));
+          dialog.initData(m_MOInfo);
+          if (!dialog.getVersion().isEmpty()) {
+              version = dialog.getVersion();
+          }
+          if (dialog.getModID() != -1) {
+              modID = dialog.getModID();
+          }
 
-    QString fomodPath = fomodTree->getParent()->getFullPath();
-    FomodInstallerDialog dialog(modName, fomodPath, std::bind(&InstallerFomod::fileState, this, std::placeholders::_1));
-    dialog.initData(m_MOInfo);
-    if (!dialog.getVersion().isEmpty()) {
-      version = dialog.getVersion();
-    }
-    if (dialog.getModID() != -1) {
-      modID = dialog.getModID();
-    }
+          manager()->setURL(dialog.getURL());
 
-    manager()->setURL(dialog.getURL());
+          if (!dialog.hasOptions()) {
+              dialog.transformToSmallInstall();
+          }
 
-    if (!dialog.hasOptions()) {
-      dialog.transformToSmallInstall();
-    }
+          if (dialog.exec() == QDialog::Accepted) {
+              modName.update(dialog.getName(), GUESS_USER);
+              DirectoryTree* newTree = dialog.updateTree(&tree);
+              tree = *newTree;
+              delete newTree;
 
-    if (dialog.exec() == QDialog::Accepted) {
-      modName.update(dialog.getName(), GUESS_USER);
-      DirectoryTree *newTree = dialog.updateTree(&tree);
-      tree = *newTree;
-      delete newTree;
-
-      return IPluginInstaller::RESULT_SUCCESS;
-    } else {
-      if (dialog.manualRequested()) {
-        modName.update(dialog.getName(), GUESS_USER);
-        return IPluginInstaller::RESULT_MANUALREQUESTED;
-      } else {
-        return IPluginInstaller::RESULT_FAILED;
+              return IPluginInstaller::RESULT_SUCCESS;
+          }
+          else {
+              if (dialog.manualRequested()) {
+                  modName.update(dialog.getName(), GUESS_USER);
+                  return IPluginInstaller::RESULT_MANUALREQUESTED;
+              }
+              else {
+                  return IPluginInstaller::RESULT_FAILED;
+              }
+          }
       }
-    }
-  } catch (const std::exception &e) {
-    reportError(tr("Installation as fomod failed: %1").arg(e.what()));
-    return IPluginInstaller::RESULT_FAILED;
+      catch (const std::exception & e) {
+          reportError(tr("Installation as fomod failed: %1").arg(e.what()));
+          return IPluginInstaller::RESULT_FAILED;
+      }
   }
+  return IPluginInstaller::RESULT_CANCELED;
 }
 
 #if QT_VERSION < QT_VERSION_CHECK(5,0,0)
