@@ -1287,10 +1287,21 @@ void FomodInstallerDialog::parseModuleConfig(XmlReader &reader)
   if (reader.hasError()) {
     throw XmlParseError(QString("%1 in line %2").arg(reader.errorString()).arg(reader.lineNumber()));
   }
-  //FIXME It is be possible for the first page to be inactive in which case this is
-  //going to go wrong.
-  displayCurrentPage();
-  activateCurrentPage();
+  //Find the first visible page 
+  int index = 0;
+  while (index < ui->stepsStack->count()) {
+    if (testVisible(index)) {
+      ui->stepsStack->setCurrentIndex(index);
+      displayCurrentPage();
+      activateCurrentPage();
+      break;
+    }
+    ++index;
+  }
+  //No pages are visible? Go to a small install
+  if (index >= ui->stepsStack->count()) {
+    transformToSmallInstall();
+  }
 }
 
 
