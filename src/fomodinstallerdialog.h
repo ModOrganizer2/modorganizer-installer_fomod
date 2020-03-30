@@ -17,8 +17,7 @@ You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef FOMODINSTALLERDIALOG_H
-#define FOMODINSTALLERDIALOG_H
+#pragma once
 
 #include "directorytree.h"
 #include "guessedvalue.h"
@@ -226,6 +225,8 @@ private slots:
   //detect signals for people playing with checkboxes/buttons
   void widgetButtonClicked();
 
+  void on_screenshotExpand_clicked();
+
 private:
 
   enum ItemOrder {
@@ -390,5 +391,3 @@ private:
 
 Q_DECLARE_METATYPE(FomodInstallerDialog::GroupType)
 Q_DECLARE_METATYPE(FomodInstallerDialog::PluginTypeInfo)
-
-#endif // FOMODINSTALLERDIALOG_H
