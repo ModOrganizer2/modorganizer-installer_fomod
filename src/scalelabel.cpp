@@ -1,60 +1,109 @@
 #include "scalelabel.h"
 #include <QResizeEvent>
 
+static bool isResourceMovie(const QString& path) {
+  for (QByteArray format : QMovie::supportedFormats()) {
+    QString fileExtension = "."+QString::fromUtf8(format);
+    if (path.endsWith(fileExtension)) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
 ScaleLabel::ScaleLabel(QWidget *parent)
   : QLabel(parent)
-  , m_Movie(nullptr)
-  , m_Pixmap(nullptr)
 {
 }
 
-ScaleLabel::~ScaleLabel()
+void ScaleLabel::setScalableResource(const QString& path)
 {
-  if (m_Movie)
-    delete m_Movie;
-  if (m_Pixmap)
-    delete m_Pixmap;
+  if (auto m = movie()) {
+    setMovie(nullptr);
+    delete m;
+    m_OriginalMovieSize = QSize();
+  }
+  if (pixmap()) {
+    setPixmap(QPixmap());
+    m_UnscaledImage = QImage();
+  }
+
+  if (path.isEmpty()) {
+    return;
+  }
+
+  if (isResourceMovie(path)) {
+    setScalableMovie(path);
+  }
+  else {
+    setScalableImage(path);
+  }
+}
+
+void ScaleLabel::setStatic(bool isStatic)
+{
+  m_isStatic = isStatic;
+
+  if (auto m = movie()) {
+    if (isStatic) {
+      m->stop();
+    }
+    else {
+      m->start();
+    }
+  }
 }
 
 void ScaleLabel::setScalableMovie(const QString &path)
 {
-  if (m_Movie) {
-    m_Movie->stop();
-    delete m_Movie;
+  QMovie* m = new QMovie(path);
+  if (!m->isValid()) {
+    qWarning(">%s< is an invalid movie. Reason: %s", qUtf8Printable(path), m->lastErrorString().toStdString().c_str());
+    delete m;
+    return;
   }
-  m_Movie = new QMovie(path);
-  m_isMovie = true;
-  setMovie(m_Movie);
-  m_Movie->start();
-  m_Movie->stop();
-  m_OriginalMovieSize = m_Movie->currentImage().size();
 
-  m_Movie->setScaledSize(m_OriginalMovieSize.scaled(size(), Qt::KeepAspectRatio));
-  m_Movie->start();
+  m->setParent(this);
+  setMovie(m);
+  m->start();
+  m->stop();
+  m_OriginalMovieSize = m->currentImage().size();
+
+  m->setScaledSize(m_OriginalMovieSize.scaled(size(), Qt::KeepAspectRatio));
+  if (!m_isStatic) {
+    m->start();
+  }
 }
 
-void ScaleLabel::setScalableImage(const QImage &image)
+void ScaleLabel::setScalableImage(const QString &path)
 {
-  if (m_Pixmap) {
-    delete m_Pixmap;
+  QImage image(path);
+  if (image.isNull()) {
+    qWarning(">%s< is a null image", qUtf8Printable(path));
   }
-  m_Pixmap = new QPixmap(QPixmap::fromImage(image));
-  m_isMovie = false;
-  setPixmap(m_Pixmap->scaled(size(), Qt::KeepAspectRatio));
+  else {
+    m_UnscaledImage = image;
+    setPixmap(QPixmap::fromImage(image).scaled(size(), Qt::KeepAspectRatio));
+  }
 }
 
 void ScaleLabel::resizeEvent(QResizeEvent *event)
 {
-  if (m_isMovie) {
-    if ((m_Movie != nullptr)) {
-      m_Movie->stop();
-      m_Movie->setScaledSize(m_OriginalMovieSize.scaled(event->size(), Qt::KeepAspectRatio));
-      m_Movie->start();
-    }
-  } else {
-    if ((m_Pixmap != nullptr) && (pixmap() != nullptr) && !pixmap()->isNull() && !m_Pixmap->isNull()) {
-      setPixmap(m_Pixmap->scaled(event->size(), Qt::KeepAspectRatio));
+  if (auto m = movie()) {
+    m->stop();
+    m->setScaledSize(m_OriginalMovieSize.scaled(event->size(), Qt::KeepAspectRatio));
+    m->start();
+
+    // We can't just skip the start() above since that is what triggers the label to resize the movie
+    // The only way to resize the movie but keep it paused is to start and then re-stop it
+    if (m_isStatic) {
+      m->stop();
     }
   }
-
+  if (auto p = pixmap()) {
+    if (!p->isNull()) {
+      setPixmap(QPixmap::fromImage(m_UnscaledImage).scaled(event->size(), Qt::KeepAspectRatio));
+    }
+  }
 }

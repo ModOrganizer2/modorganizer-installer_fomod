@@ -20,6 +20,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "fomodinstallerdialog.h"
 #include "ui_fomodinstallerdialog.h"
 
+#include "fomodscreenshotdialog.h"
 #include "imoinfo.h"
 #include "iplugingame.h"
 #include "report.h"
@@ -43,6 +44,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <array>
 #include <sstream>
+#include <utility>
+#include <vector>
 
 using namespace MOBase;
 
@@ -270,9 +273,10 @@ void FomodInstallerDialog::initData(IOrganizer *moInfo)
   // parse provided package information
   readInfoXml();
 
-  QImage screenshot(QDir::tempPath() + "/" + m_FomodPath + "/fomod/screenshot.png");
-  if (!screenshot.isNull()) {
-    ui->screenshotLabel->setScalableImage(screenshot);
+  QString screenshotPath = QDir::tempPath() + "/" + m_FomodPath + "/fomod/screenshot.png";
+  if (!QImage(screenshotPath).isNull()) {
+    ui->screenshotLabel->setScalableResource(screenshotPath);
+    ui->screenshotExpand->setVisible(false);
   }
 
   readModuleConfigXml();
@@ -632,18 +636,11 @@ void FomodInstallerDialog::highlightControl(QAbstractButton *button)
     QString screenshotFileName = screenshotName.toString();
     if (!screenshotFileName.isEmpty()) {
       QString temp = QDir::tempPath() + "/" + m_FomodPath + "/" + QDir::fromNativeSeparators(screenshotFileName);
-      if (temp.endsWith(".gif", Qt::CaseInsensitive)) {
-        ui->screenshotLabel->setScalableMovie(temp);
-      } else {
-        QImage screenshot(temp);
-        if (screenshot.isNull()) {
-          qWarning(">%s< is a null image", qUtf8Printable(temp));
-        } else {
-          ui->screenshotLabel->setScalableImage(screenshot);
-        }
-      }
+      ui->screenshotLabel->setScalableResource(temp);
+      ui->screenshotExpand->setVisible(true);
     } else {
-      ui->screenshotLabel->setPixmap(QPixmap());
+      ui->screenshotLabel->setScalableResource(QString());
+      ui->screenshotExpand->setVisible(false);
     }
   }
   ui->descriptionText->setText(button->property("description").toString());
@@ -1632,4 +1629,35 @@ void FomodInstallerDialog::on_prevBtn_clicked()
     ui->prevBtn->setEnabled(false);
   }
   activateCurrentPage();
+}
+
+void FomodInstallerDialog::on_screenshotExpand_clicked()
+{
+  std::vector<std::pair<QString, QString>> carouselImages;
+  int carouselIndex = -1;
+  
+  for (auto choice : ui->stepsStack->currentWidget()->findChildren<QAbstractButton*>("choice")) {
+    QString screenshotFileName = choice->property("screenshot").toString();
+
+    // If a choice has no screenshot, it should not be displayed in the screenshot dialog nor marked as
+    // the active carouselIndex
+    if (screenshotFileName.isEmpty()) {
+        continue;
+    }
+
+    QString temp = QDir::tempPath() + "/" + m_FomodPath + "/" + QDir::fromNativeSeparators(screenshotFileName);
+    carouselImages.push_back(std::pair<QString, QString>(choice->text(), temp));
+
+    // Focus the screenshot carousel on the user's selected choice (or the first if there are multiple)
+    if (carouselIndex == -1 && choice->isChecked()) {
+        carouselIndex = carouselImages.size()-1;
+    }
+  }
+
+  // Focus the screenshot carousel on the first screenshot if the user has not selected a choice with a
+  // screenshot (or any choice at all)
+  carouselIndex = (carouselIndex < 0) ? 0 : carouselIndex;
+  
+  QDialog* dialog = new FomodScreenshotDialog(this, carouselImages, carouselIndex);
+  dialog->show();
 }
