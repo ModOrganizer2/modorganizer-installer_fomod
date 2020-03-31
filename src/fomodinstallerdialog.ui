@@ -172,7 +172,7 @@
            <cursorShape>PointingHandCursor</cursorShape>
           </property>
           <property name="styleSheet">
-           <string notr="true">border:none</string>
+           <string notr="true">border:none; background:none</string>
           </property>
           <property name="text">
            <string/>
