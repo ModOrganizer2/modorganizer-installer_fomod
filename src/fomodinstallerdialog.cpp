@@ -215,7 +215,7 @@ void FomodInstallerDialog::readInfoXml()
         }
       }
       if (!success) {
-        reportError(tr("Failed to parse ModuleConfig.xml. See console for details"));
+        reportError(tr("Failed to parse %1. See console for details.").arg("info.xml"));
       }
     }
     file.close();
