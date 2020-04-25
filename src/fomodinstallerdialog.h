@@ -350,7 +350,7 @@ private:
                 MOBase::DirectoryTree::Node *destinationTree, const QString &destinationPath,
                 MOBase::DirectoryTree::Overwrites *overwrites, Leaves *leaves, int pri);
 
-  static void FomodInstallerDialog::applyPriority(Leaves *leaves, MOBase::DirectoryTree::Node *node, int priority);
+  static void applyPriority(Leaves *leaves, MOBase::DirectoryTree::Node *node, int priority);
 
   static QString toString(MOBase::IPluginList::PluginStates state);
 
