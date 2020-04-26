@@ -57,6 +57,7 @@
     </message>
     <message>
         <location filename="fomodinstallerdialog.cpp" line="218"/>
+        <location filename="fomodinstallerdialog.cpp" line="262"/>
         <source>Failed to parse %1. See console for details.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -66,8 +67,10 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <location filename="fomodinstallerdialog.cpp" line="218"/>
         <location filename="fomodinstallerdialog.cpp" line="262"/>
-        <source>Failed to parse ModuleConfig.xml. See console for details</source>
+        <source>Failed to parse %1. See console for details.</source>
+        <oldsource>Failed to parse ModuleConfig.xml. See console for details</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
