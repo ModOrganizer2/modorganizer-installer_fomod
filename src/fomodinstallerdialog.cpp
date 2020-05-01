@@ -182,63 +182,20 @@ QByteArray skipXmlHeader(QIODevice &file)
   return file.readAll();
 }
 
-void FomodInstallerDialog::readInfoXml()
+void FomodInstallerDialog::readXml(QFile &file, void (FomodInstallerDialog::* callback)(XmlReader &))
 {
-  QFile file(QDir::tempPath() + "/" + m_FomodPath + "/fomod/info.xml");
-  if (file.open(QIODevice::ReadOnly)) {
-    bool success = false;
-    std::string errorMessage;
-    try {
-      QXmlStreamReader reader(&file);
-      parseInfo(reader);
-      success = true;
-    } catch (const XmlParseError &e) {
-      errorMessage = e.what();
-    }
-
-    if (!success) {
-      // nmm's xml parser is less strict than the one from qt and allows files with
-      // wrong encoding in the header. Being strict here would be bad user experience
-      // this works around bad headers.
-      QByteArray headerlessData = skipXmlHeader(file);
-
-      // try parsing the file with several encodings to support broken files
-      foreach (const char *encoding, boost::assign::list_of("utf-16")("utf-8")("iso-8859-1")) {
-        log::debug("Trying encoding {} for {}... ", encoding, "info.xml");
-        try {
-          QTextCodec *codec = QTextCodec::codecForName(encoding);
-          XmlReader reader(codec->fromUnicode(QString("<?xml version=\"1.0\" encoding=\"%1\" ?>").arg(encoding)) + headerlessData);
-          parseInfo(reader);
-          log::debug("Interpreting {} as {}.", "info.xml", encoding);
-          success = true;
-          break;
-        } catch (const XmlParseError &e) {
-          log::debug("Not {}: {}.", encoding, e.what());
-        }
-      }
-      if (!success) {
-        reportError(tr("Failed to parse %1. See console for details.").arg("info.xml"));
-      }
-    }
-    file.close();
-  }
-}
-
-void FomodInstallerDialog::readModuleConfigXml()
-{
-  QFile file(QDir::tempPath() + "/" + m_FomodPath + "/fomod/ModuleConfig.xml");
-  if (!file.open(QIODevice::ReadOnly)) {
-    throw MyException(tr("ModuleConfig.xml missing"));
-  }
+  // List of encodings to try:
+  static const std::vector<const char *> encodings{ "utf-16", "utf-8", "iso-8859-1" };
 
   bool success = false;
   std::string errorMessage;
   try {
     XmlReader reader(&file);
-    parseModuleConfig(reader);
+    (this->*callback)(reader);
     success = true;
-  } catch (const XmlParseError &e) {
-    qWarning("the ModuleConfig.xml in this file is incorrectly encoded (%s). Applying heuristics...", e.what());
+  }
+  catch (const XmlParseError& e) {
+    log::warn("The {} in this file is incorrectly encoded ({}). Applying heuristics...", file.fileName(), e.what());
   }
 
   if (!success) {
@@ -248,25 +205,46 @@ void FomodInstallerDialog::readModuleConfigXml()
     QByteArray headerlessData = skipXmlHeader(file);
 
     // try parsing the file with several encodings to support broken files
-    foreach (const char *encoding, boost::assign::list_of("utf-16")("utf-8")("iso-8859-1")) {
-      log::debug("Trying encoding {} for {}... ", encoding, "ModuleConfig.xml");
+    for (auto encoding: encodings) {
+      log::debug("Trying encoding {} for {}... ", encoding, file.fileName());
       try {
-        QTextCodec *codec = QTextCodec::codecForName(encoding);
+        QTextCodec* codec = QTextCodec::codecForName(encoding);
         XmlReader reader(codec->fromUnicode(QString("<?xml version=\"1.0\" encoding=\"%1\" ?>").arg(encoding)) + headerlessData);
-        parseModuleConfig(reader);
-        log::debug("Interpreting {} as {}.", "ModuleConfig.xml", encoding);
+        (this->*callback)(reader);
+        log::debug("Interpreting {} as {}.", file.fileName(), encoding);
         success = true;
         break;
-      } catch (const XmlParseError &e) {
+      }
+      catch (const XmlParseError& e) {
         log::debug("Not {}: {}.", encoding, e.what());
       }
     }
     if (!success) {
-      reportError(tr("Failed to parse %1. See console for details.").arg("ModuleConfig.xml"));
+      reportError(tr("Failed to parse %1. See console for details.").arg(file.fileName()));
     }
 
     file.close();
   }
+}
+
+void FomodInstallerDialog::readInfoXml()
+{
+  QFile file(QDir::tempPath() + "/" + m_FomodPath + "/fomod/info.xml");
+
+  // We don't need a info.xml file, so we just return if we cannot open it:
+  if (!file.open(QIODevice::ReadOnly)) {
+    return;
+  }
+  readXml(file, &FomodInstallerDialog::parseInfo);
+}
+
+void FomodInstallerDialog::readModuleConfigXml()
+{
+  QFile file(QDir::tempPath() + "/" + m_FomodPath + "/fomod/ModuleConfig.xml");
+  if (!file.open(QIODevice::ReadOnly)) {
+    throw MyException(tr("%1 missing.").arg(file.fileName()));
+  }
+  readXml(file, &FomodInstallerDialog::parseModuleConfig);
 }
 
 void FomodInstallerDialog::initData(IOrganizer *moInfo)
@@ -597,7 +575,7 @@ QString FomodInstallerDialog::readContent(QXmlStreamReader &reader)
 }
 
 
-void FomodInstallerDialog::parseInfo(QXmlStreamReader &reader)
+void FomodInstallerDialog::parseInfo(XmlReader &reader)
 {
   while (!reader.atEnd()) {
     switch (reader.readNext()) {

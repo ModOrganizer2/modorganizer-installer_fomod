@@ -292,9 +292,21 @@ private:
 private:
 
   QString readContent(QXmlStreamReader &reader);
+
+  /**
+   * @brief Read XML from the given file, trying various encoding, and using
+   *     the given callback on each try.
+   *
+   * @param file The file to read, must already be opened.
+   * @param callback The callback used for every encoding try.
+   */
+  void readXml(QFile& file, void (FomodInstallerDialog::* callback)(XmlReader&));
+
   void readInfoXml();
   void readModuleConfigXml();
-  void parseInfo(QXmlStreamReader &data);
+
+  void parseInfo(XmlReader &data);
+  void parseModuleConfig(XmlReader& data);
 
   void updateNameEdit();
 
@@ -330,7 +342,6 @@ private:
   void readConditionalFileInstallList(XmlReader &reader);
   void readStepList(XmlReader &reader);
   void readModuleConfiguration(XmlReader &reader);
-  void parseModuleConfig(XmlReader &data);
   void highlightControl(QAbstractButton *button);
 
   std::pair<bool, QString> testCondition(int maxIndex, const QString &flag, const QString &value) const;
