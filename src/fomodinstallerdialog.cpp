@@ -28,8 +28,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "scriptextender.h"
 #include "utility.h"
 #include "xmlreader.h"
+#include "log.h"
 
 #include <QCheckBox>
+#include <QCompleter>
 #include <QDebug>
 #include <QDir>
 #include <QFile>
@@ -86,7 +88,7 @@ FomodInstallerDialog::FomodInstallerDialog(const GuessedValue<QString> &modName,
   setWindowTitle(modName);
 
   updateNameEdit();
-  ui->nameCombo->setAutoCompletionCaseSensitivity(Qt::CaseSensitive);
+  ui->nameCombo->completer()->setCaseSensitivity(Qt::CaseSensitive);
 }
 
 FomodInstallerDialog::~FomodInstallerDialog()
@@ -202,16 +204,16 @@ void FomodInstallerDialog::readInfoXml()
 
       // try parsing the file with several encodings to support broken files
       foreach (const char *encoding, boost::assign::list_of("utf-16")("utf-8")("iso-8859-1")) {
-        qDebug("trying encoding %s", encoding);
+        log::debug("Trying encoding {} for {}... ", encoding, "info.xml");
         try {
           QTextCodec *codec = QTextCodec::codecForName(encoding);
           XmlReader reader(codec->fromUnicode(QString("<?xml version=\"1.0\" encoding=\"%1\" ?>").arg(encoding)) + headerlessData);
           parseInfo(reader);
-          qDebug("interpreting as %s", encoding);
+          log::debug("Interpreting {} as {}.", "info.xml", encoding);
           success = true;
           break;
         } catch (const XmlParseError &e) {
-          qDebug("not %s: %s", encoding, e.what());
+          log::debug("Not {}: {}.", encoding, e.what());
         }
       }
       if (!success) {
@@ -247,15 +249,16 @@ void FomodInstallerDialog::readModuleConfigXml()
 
     // try parsing the file with several encodings to support broken files
     foreach (const char *encoding, boost::assign::list_of("utf-16")("utf-8")("iso-8859-1")) {
+      log::debug("Trying encoding {} for {}... ", encoding, "ModuleConfig.xml");
       try {
         QTextCodec *codec = QTextCodec::codecForName(encoding);
         XmlReader reader(codec->fromUnicode(QString("<?xml version=\"1.0\" encoding=\"%1\" ?>").arg(encoding)) + headerlessData);
         parseModuleConfig(reader);
-        qDebug("interpreting as %s", encoding);
+        log::debug("Interpreting {} as {}.", "ModuleConfig.xml", encoding);
         success = true;
         break;
       } catch (const XmlParseError &e) {
-        qDebug("not %s: %s", encoding, e.what());
+        log::debug("Not {}: {}.", encoding, e.what());
       }
     }
     if (!success) {
@@ -302,152 +305,77 @@ QString FomodInstallerDialog::getURL() const
   return m_URL;
 }
 
-void FomodInstallerDialog::moveTree(DirectoryTree::Node *target, DirectoryTree::Node *source, DirectoryTree::Overwrites *overwrites)
+void FomodInstallerDialog::copyLeaf(std::shared_ptr<IFileTree> sourceTree, QString sourcePath,
+                                    std::shared_ptr<IFileTree> destinationTree, QString destinationPath,
+                                    IFileTree::OverwritesType &overwrites,
+                                    Leaves &leaves, int pri)
 {
-  for (DirectoryTree::const_node_iterator iter = source->nodesBegin(); iter != source->nodesEnd();) {
-    target->addNode(*iter, true, overwrites);
-    iter = source->detach(iter);
+  // Note (Holt59): There was a lot of stuff here that can heavily be reduced.
+  std::shared_ptr<FileTreeEntry> sourceEntry = sourceTree->find(sourcePath);
+
+  if (sourceEntry == nullptr) {
+    qCritical("%s not found!", qUtf8Printable(sourcePath));
+    return;
   }
 
-  for (DirectoryTree::const_leaf_reverse_iterator iter = source->leafsRBegin();
-       iter != source->leafsREnd(); ++iter) {
-    target->addLeaf(*iter, true, overwrites);
+  // TODO:
+  applyPriority(leaves, sourceEntry->parent().get(), pri);
+
+  if (destinationPath.endsWith("/") || destinationPath.endsWith("\\")) {
+    destinationPath += sourceEntry->name();
+  }
+
+  destinationTree->move(sourceEntry, destinationPath, IFileTree::InsertPolicy::MERGE);
+}
+
+void FomodInstallerDialog::applyPriority(Leaves &leaves, IFileTree const* tree, int priority)
+{
+  for (auto entry : *tree) {
+    if (entry->isDir()) {
+      applyPriority(leaves, entry->astree().get(), priority);
+    }
+    else {
+      leaves.insert({ entry.get(), {priority, entry->path() } });
+    }
   }
 }
 
-
-DirectoryTree::Node *FomodInstallerDialog::findNode(DirectoryTree::Node *node, const QString &path, bool create)
-{
-  if (path.length() == 0) {
-    return node;
-  }
-
-  int pos = path.indexOf(QRegExp("[\\\\/]"));
-  QString subPath = path;
-  if (pos > 0) {
-    subPath = path.mid(0, pos);
-  }
-  for (DirectoryTree::const_node_iterator iter = node->nodesBegin(); iter != node->nodesEnd(); ++iter) {
-    if ((*iter)->getData().name == subPath) {
-      if (pos <= 0) {
-        return *iter;
-      } else {
-        return findNode(*iter, path.mid(pos + 1), create);
-      }
-    }
-  }
-  if (create) {
-    DirectoryTree::Node *newNode = new DirectoryTree::Node;
-    newNode->setData(subPath);
-    node->addNode(newNode, false);
-    if (pos <= 0) {
-      return newNode;
-    } else {
-      return findNode(newNode, path.mid(pos + 1), create);
-    }
-  } else {
-    throw MyException(QString("%1 not found in archive").arg(path));
-  }
-}
-
-void FomodInstallerDialog::copyLeaf(DirectoryTree::Node *sourceTree, const QString &sourcePath,
-                                    DirectoryTree::Node *destinationTree, const QString &destinationPath,
-                                    DirectoryTree::Overwrites *overwrites,
-                                    Leaves *leaves, int pri)
-{
-  int sourceFileIndex = sourcePath.lastIndexOf('\\');
-  if (sourceFileIndex == -1) {
-    sourceFileIndex = sourcePath.lastIndexOf('/');
-    if (sourceFileIndex == -1) {
-      sourceFileIndex = 0;
-    }
-  }
-  DirectoryTree::Node *sourceNode = sourceFileIndex == 0 ? sourceTree : findNode(sourceTree, sourcePath.mid(0, sourceFileIndex), false);
-  applyPriority(leaves, sourceNode, pri);
-
-  int destinationFileIndex = destinationPath.lastIndexOf('\\');
-  if (destinationFileIndex == -1) {
-    destinationFileIndex = destinationPath.lastIndexOf('/');
-    if (destinationFileIndex == -1) {
-      destinationFileIndex = 0;
-    }
-  }
-
-  DirectoryTree::Node *destinationNode =
-      destinationFileIndex == 0 ? destinationTree
-                                : findNode(destinationTree, destinationPath.mid(0, destinationFileIndex), true);
-
-  QString sourceName = sourcePath.mid((sourceFileIndex != 0) ? sourceFileIndex + 1 : 0);
-  QString destinationName = (destinationFileIndex != 0) ? destinationPath.mid(destinationFileIndex + 1) : destinationPath;
-  if (destinationName.length() == 0) {
-    destinationName = sourceName;
-  }
-
-  bool found = false;
-  for (DirectoryTree::const_leaf_reverse_iterator iter = sourceNode->leafsRBegin();
-       iter != sourceNode->leafsREnd(); ++iter) {
-    if (iter->getName() == sourceName) {
-      FileTreeInformation temp = *iter;
-      temp.setName(destinationName);
-      destinationNode->addLeaf(temp, true, overwrites);
-      found = true;
-    }
-  }
-  if (!found) {
-    qCritical("%s not found!", qUtf8Printable(sourceName));
-  }
-}
-
-void dumpTree(DirectoryTree::Node *node, int indent)
-{
-  for (DirectoryTree::const_leaf_reverse_iterator iter = node->leafsRBegin();
-       iter != node->leafsREnd(); ++iter) {
-    qDebug("%.*s%s", indent, " ", iter->getName().toUtf8().constData());
-  }
-
-  for (DirectoryTree::const_node_iterator iter = node->nodesBegin(); iter != node->nodesEnd(); ++iter) {
-    qDebug("%.*s-- %s", indent, " ", (*iter)->getData().name.toUtf8().constData());
-    dumpTree(*iter, indent + 2);
-  }
-}
-
-void FomodInstallerDialog::applyPriority(Leaves *leaves, DirectoryTree::Node *node, int priority)
-{
-  for (DirectoryTree::leaf_iterator iter = node->leafsBegin(); iter != node->leafsEnd(); ++iter) {
-    LeafInfo info = { priority, node->getFullPath(&*iter) };
-    leaves->insert(std::make_pair(static_cast<int>(iter->getIndex()), info));
-  }
-  for (DirectoryTree::node_iterator iter = node->nodesBegin(); iter != node->nodesEnd(); ++iter) {
-    applyPriority(leaves, *iter, priority);
-  }
-}
-
-bool FomodInstallerDialog::copyFileIterator(DirectoryTree *sourceTree, DirectoryTree *destinationTree,
+bool FomodInstallerDialog::copyFileIterator(std::shared_ptr<IFileTree> sourceTree, std::shared_ptr<IFileTree> destinationTree,
                                             const FileDescriptor *descriptor,
-                                            Leaves *leaves, DirectoryTree::Overwrites *overwrites)
+                                            Leaves &leaves, IFileTree::OverwritesType &overwrites)
 {
   QString source = (m_FomodPath.length() != 0) ? (m_FomodPath + "\\" + descriptor->m_Source)
                                                : descriptor->m_Source;
   int pri = descriptor->m_Priority;
   QString destination = descriptor->m_Destination;
+
   try {
     if (descriptor->m_IsFolder) {
-      DirectoryTree::Node *sourceNode = findNode(sourceTree, source, false);
-      //Now apply the priority to the sourceNode tree
-      applyPriority(leaves, sourceNode, pri);
-      DirectoryTree::Node *targetNode = findNode(destinationTree, destination, true);
-      moveTree(targetNode, sourceNode, overwrites);
+      std::shared_ptr<IFileTree> sourceNode = sourceTree->findDirectory(source);
+
+      // Apply the priority on the source tree:
+      applyPriority(leaves, sourceNode.get(), pri);
+
+      // addDirectory will create the directory if it does not exist:
+      std::shared_ptr<IFileTree> targetNode = destinationTree->addDirectory(destination);
+
+      // Note (Holt59): Before, the directories were processed before the files, and the files were processed
+      // in reverse order. The directories before files was mandatory since both were stored differently, but
+      // I have no idea why the files were processed in reverse order and it does not make sense since there
+      // cannot be two identical file in a tree.
+      targetNode->merge(sourceNode, &overwrites);
+
     } else {
       copyLeaf(sourceTree, source, destinationTree, destination, overwrites, leaves, pri);
     }
     return true;
-  } catch (const MyException &e) {
+  } 
+  catch (const MyException &e) {
     qCritical("failed to extract %s to %s: %s",
               qUtf8Printable(source), qUtf8Printable(destination), e.what());
     return false;
   }
 }
-
 
 std::pair<bool, QString> FomodInstallerDialog::testCondition(int maxIndex, const ValueCondition *valCondition) const
 {
@@ -574,7 +502,7 @@ std::pair<bool, QString> FomodInstallerDialog::testCondition(int, const VersionC
       .arg(typeName).arg(condition->m_RequiredVersion).arg(version));
 }
 
-DirectoryTree *FomodInstallerDialog::updateTree(DirectoryTree *tree)
+void FomodInstallerDialog::updateTree(std::shared_ptr<IFileTree> &tree)
 {
   FileDescriptorList descriptorList;
 
@@ -611,21 +539,23 @@ DirectoryTree *FomodInstallerDialog::updateTree(DirectoryTree *tree)
 
   std::sort(descriptorList.begin(), descriptorList.end(), byPriority);
 
-  DirectoryTree *newTree = new DirectoryTree;
+  IFileTree::OverwritesType overwrites;
   Leaves leaves;
-  DirectoryTree::Overwrites overwrites;
+  std::shared_ptr<IFileTree> newTree = tree->createOrphanTree();
 
   for (const FileDescriptor *file : descriptorList) {
-    copyFileIterator(tree, newTree, file, &leaves, &overwrites);
+    copyFileIterator(tree, newTree, file, leaves, overwrites);
   }
 
   for (auto overwrite : overwrites) {
-    if (leaves[overwrite.first].priority == leaves[overwrite.second].priority) {
-      qWarning() << "Overriding " << leaves[overwrite.first].path << " with " <<
-                    leaves[overwrite.second].path << " which has the same priority";
+    if (leaves[overwrite.first.get()].priority == leaves[overwrite.second.get()].priority) {
+      qWarning() << "Overriding " << leaves[overwrite.first.get()].path << " with " <<
+                    leaves[overwrite.second.get()].path << " which has the same priority";
     }
   }
-  return newTree;
+
+  // Update the tree:
+  tree = newTree;
 }
 
 
@@ -763,7 +693,7 @@ void FomodInstallerDialog::readFileList(XmlReader &reader, FileDescriptorList &f
       //Similarly, I'm not checking for the destination if the source is blank. Why'd you want to
       //copy the fomod directory on an install?
       if (attributes.value("source").isEmpty()) {
-        qDebug("Ignoring %s entry with empty source.", reader.name().toUtf8().constData());
+        log::debug("Ignoring {} entry with empty source.", reader.name());
       } else {
         FileDescriptor *file = new FileDescriptor(this);
         file->m_Source = attributes.value("source").toString();
@@ -1650,7 +1580,7 @@ void FomodInstallerDialog::on_screenshotExpand_clicked()
 
     // Focus the screenshot carousel on the user's selected choice (or the first if there are multiple)
     if (carouselIndex == -1 && choice->isChecked()) {
-        carouselIndex = carouselImages.size()-1;
+        carouselIndex = ((int) carouselImages.size()) - 1;
     }
   }
 

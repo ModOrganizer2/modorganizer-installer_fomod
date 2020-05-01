@@ -1,18 +1,17 @@
 #include "installerfomod.h"
 
-#include "filenamestring.h"
 #include "fomodinstallerdialog.h"
 #include "imodinterface.h"
 #include "imodlist.h"
 
 #include <report.h>
+#include <log.h>
 #include <iinstallationmanager.h>
 #include <utility.h>
 
 #include <QtPlugin>
 #include <QStringList>
 #include <QImageReader>
-#include <QDebug>
 
 
 using namespace MOBase;
@@ -85,72 +84,65 @@ bool InstallerFomod::isManualInstaller() const
   return false;
 }
 
-
-const DirectoryTree *InstallerFomod::findFomodDirectory(const DirectoryTree *tree) const
+std::shared_ptr<const IFileTree> InstallerFomod::findFomodDirectory(std::shared_ptr<const IFileTree> tree) const
 {
-  for (DirectoryTree::const_node_iterator iter = tree->nodesBegin();
-       iter != tree->nodesEnd(); ++iter) {
-    const FileNameString &dirName = (*iter)->getData().name;
-    if (dirName == "fomod") {
-      return *iter;
-    }
+  auto entry = tree->find("fomod", FileTreeEntry::DIRECTORY);
+
+  if (entry != nullptr) {
+    return entry->astree();
   }
-  if ((tree->numNodes() == 1) && (tree->numLeafs() == 0)) {
-    return findFomodDirectory(*tree->nodesBegin());
+
+  if (tree->size() == 1 && tree->at(0)->isDir()) {
+    return findFomodDirectory(tree->at(0)->astree());
   }
   return nullptr;
 }
 
 
-bool InstallerFomod::isArchiveSupported(const DirectoryTree &tree) const
+bool InstallerFomod::isArchiveSupported(std::shared_ptr<const IFileTree> tree) const
 {
-  const DirectoryTree *fomodDir = findFomodDirectory(&tree);
-  if (fomodDir != nullptr) {
-    for (DirectoryTree::const_leaf_iterator fileIter = fomodDir->leafsBegin();
-         fileIter != fomodDir->leafsEnd(); ++fileIter) {
-      if (fileIter->getName() == "ModuleConfig.xml") {
-        return true;
-      }
-    }
+  tree = findFomodDirectory(tree);
+  if (tree != nullptr) {
+    return tree->exists("ModuleConfig.xml", FileTreeEntry::FILE);
   }
   return false;
 }
 
-void InstallerFomod::appendImageFiles(QStringList &result, DirectoryTree *tree)
+void InstallerFomod::appendImageFiles(std::vector<std::shared_ptr<const FileTreeEntry>> &entries, std::shared_ptr<const IFileTree> tree) const
 {
-  for (auto iter = tree->leafsBegin(); iter != tree->leafsEnd(); ++iter) {
-    if ((iter->getName().endsWith(".png")) ||
-        (iter->getName().endsWith(".jpg")) ||
-        (iter->getName().endsWith(".gif")) ||
-        (iter->getName().endsWith(".bmp"))) {
-      result.append(tree->getFullPath(&*iter));
+  static std::set<QString, FileNameComparator> imageSuffixes{ "png", "jpg", "jpeg", "gif", "bmp" };
+  for (auto entry : *tree) {
+    if (entry->isDir()) {
+      appendImageFiles(entries, entry->astree());
     }
-  }
-
-  for (auto iter = tree->nodesBegin(); iter != tree->nodesEnd(); ++iter) {
-    appendImageFiles(result, *iter);
+    else if (imageSuffixes.count(entry->suffix()) > 0) {
+      entries.push_back(entry);
+    }
   }
 }
 
 
-QStringList InstallerFomod::buildFomodTree(DirectoryTree &tree)
+std::vector<std::shared_ptr<const FileTreeEntry>> InstallerFomod::buildFomodTree(std::shared_ptr<const IFileTree> tree) const
 {
-  QStringList result;
-  const DirectoryTree *fomodTree = findFomodDirectory(&tree);
-  for (auto iter = fomodTree->leafsBegin(); iter != fomodTree->leafsEnd(); ++iter) {
-    if ((iter->getName() == "info.xml") ||
-        (iter->getName() == "ModuleConfig.xml")) {
-      result.append(fomodTree->getFullPath(&*iter));
+  std::vector<std::shared_ptr<const FileTreeEntry>> entries;
+
+  auto fomodTree = findFomodDirectory(tree);
+
+  for (auto entry: *fomodTree) {
+    if (entry->isFile() 
+      && (entry->compare("info.xml") == 0 ||
+          entry->compare("ModuleConfig.xml") == 0)) {
+      entries.push_back(entry);
     }
   }
 
-  appendImageFiles(result, &tree);
+  appendImageFiles(entries, tree);
 
-  return result;
+  return entries;
 }
 
 
-IPluginList::PluginStates InstallerFomod::fileState(const QString &fileName)
+IPluginList::PluginStates InstallerFomod::fileState(const QString &fileName) const
 {
   QString ext = QFileInfo(fileName).suffix().toLower();
   if ((ext == "esp") || (ext == "esm") || (ext == "esl")) {
@@ -160,10 +152,10 @@ IPluginList::PluginStates InstallerFomod::fileState(const QString &fileName)
     }
   } else if (allowAnyFile()) {
     QFileInfo info(fileName);
-    FileNameString name(info.fileName());
+    QString name = info.fileName();
     QStringList files = m_MOInfo->findFiles(
         info.dir().path(), [&, name](const QString &f) -> bool {
-          return name == QFileInfo(f).fileName();
+          return name.compare(QFileInfo(f).fileName(), FileNameComparator::CaseSensitivity) == 0;
         });
     // A note: The list of files produced is somewhat odd as it's the full path
     // to the originating mod (or mods). However, all we care about is if it's
@@ -172,8 +164,7 @@ IPluginList::PluginStates InstallerFomod::fileState(const QString &fileName)
       return IPluginList::STATE_ACTIVE;
     }
   } else {
-    qWarning() << "A dependency on non esp/esm/esl " << fileName
-               << " will always find it as missing";
+    log::warn("A dependency on non esp/esm/esl {} will always find it as missing.", fileName);
     return IPluginList::STATE_MISSING;
   }
 
@@ -201,15 +192,16 @@ IPluginList::PluginStates InstallerFomod::fileState(const QString &fileName)
   return IPluginList::STATE_MISSING;
 }
 
-IPluginInstaller::EInstallResult InstallerFomod::install(GuessedValue<QString> &modName, DirectoryTree &tree,
+
+IPluginInstaller::EInstallResult InstallerFomod::install(GuessedValue<QString> &modName, std::shared_ptr<IFileTree> &tree,
                                                          QString &version, int &modID)
 {
-  QStringList installerFiles = buildFomodTree(tree);
-  if (!manager()->extractFiles(installerFiles, false).isEmpty()) {
+  auto installerFiles = buildFomodTree(tree);
+  if (manager()->extractFiles(installerFiles).size() == installerFiles.size()) {
       try {
-          const DirectoryTree* fomodTree = findFomodDirectory(&tree);
+          std::shared_ptr<const IFileTree> fomodTree = findFomodDirectory(tree);
 
-          QString fomodPath = fomodTree->getParent()->getFullPath();
+          QString fomodPath = fomodTree->parent()->path();
           FomodInstallerDialog dialog(modName, fomodPath, std::bind(&InstallerFomod::fileState, this, std::placeholders::_1));
           dialog.initData(m_MOInfo);
           if (!dialog.getVersion().isEmpty()) {
@@ -228,9 +220,7 @@ IPluginInstaller::EInstallResult InstallerFomod::install(GuessedValue<QString> &
           auto result = dialog.exec();
           if (result == QDialog::Accepted) {
               modName.update(dialog.getName(), GUESS_USER);
-              DirectoryTree* newTree = dialog.updateTree(&tree);
-              tree = *newTree;
-              delete newTree;
+              dialog.updateTree(tree);
 
               return IPluginInstaller::RESULT_SUCCESS;
           }

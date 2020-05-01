@@ -19,7 +19,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include "directorytree.h"
 #include "guessedvalue.h"
 #include "ipluginlist.h"
 
@@ -31,6 +30,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <functional>
 #include <vector>
+
+#include "ifiletree.h"
 
 class QAbstractButton;
 class QXmlStreamReader;
@@ -193,14 +194,11 @@ public:
   QString getURL() const;
 
   /**
-   * @brief retrieve the updated archive tree from the dialog. The caller is responsible to delete the returned tree.
+   * @brief Updated the archive tree from the dialog.
    *
-   * @note This call is destructive on the input tree!
-   *
-   * @param tree input tree. (TODO isn't this the same as the tree passed in the constructor?)
-   * @return DataTree* a new tree with only the selected options and directories arranged correctly. The caller takes custody of this pointer!
+   * @param tree The input archive tree.
    **/
-  MOBase::DirectoryTree *updateTree(MOBase::DirectoryTree *tree);
+  void updateTree(std::shared_ptr<MOBase::IFileTree> &tree);
 
   bool hasOptions();
 
@@ -289,7 +287,7 @@ private:
     QString path;
   };
 
-  typedef std::map<int, LeafInfo> Leaves;
+  using Leaves = std::map<const MOBase::FileTreeEntry*, LeafInfo>;
 
 private:
 
@@ -308,9 +306,9 @@ private:
 
   PluginType getPluginDependencyType(int page, PluginTypeInfo const &info) const;
 
-  bool copyFileIterator(MOBase::DirectoryTree *sourceTree, MOBase::DirectoryTree *destinationTree,
+  bool copyFileIterator(std::shared_ptr<MOBase::IFileTree> sourceTree, std::shared_ptr<MOBase::IFileTree> destinationTree,
                         const FileDescriptor *descriptor,
-                        Leaves *leaves, MOBase::DirectoryTree::Overwrites *overwrites);
+                        Leaves &leaves, MOBase::IFileTree::OverwritesType &overwrites);
 
   typedef void (FomodInstallerDialog::*TagProcessor)(XmlReader &reader);
   void processXmlTag(XmlReader &reader, char const *tag, TagProcessor func);
@@ -344,13 +342,14 @@ private:
   bool testVisible(int pageIndex) const;
   bool nextPage();
   void activateCurrentPage();
-  void moveTree(MOBase::DirectoryTree::Node *target, MOBase::DirectoryTree::Node *source, MOBase::DirectoryTree::Overwrites *overwrites);
-  MOBase::DirectoryTree::Node *findNode(MOBase::DirectoryTree::Node *node, const QString &path, bool create);
-  void copyLeaf(MOBase::DirectoryTree::Node *sourceTree, const QString &sourcePath,
-                MOBase::DirectoryTree::Node *destinationTree, const QString &destinationPath,
-                MOBase::DirectoryTree::Overwrites *overwrites, Leaves *leaves, int pri);
 
-  static void applyPriority(Leaves *leaves, MOBase::DirectoryTree::Node *node, int priority);
+  void moveTree(std::shared_ptr<MOBase::IFileTree> target, std::shared_ptr<MOBase::IFileTree> source, MOBase::IFileTree::OverwritesType &overwrites);
+
+  void copyLeaf(std::shared_ptr<MOBase::IFileTree> sourceTree, QString sourcePath,
+                std::shared_ptr<MOBase::IFileTree> destinationTree, QString destinationPath,
+                MOBase::IFileTree::OverwritesType &overwrites, Leaves &leaves, int pri);
+
+  static void applyPriority(Leaves &leaves, MOBase::IFileTree const *tree, int priority);
 
   static QString toString(MOBase::IPluginList::PluginStates state);
 

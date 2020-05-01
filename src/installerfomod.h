@@ -31,8 +31,8 @@ public:
   virtual unsigned int priority() const;
   virtual bool isManualInstaller() const;
 
-  virtual bool isArchiveSupported(const MOBase::DirectoryTree &tree) const;
-  virtual EInstallResult install(MOBase::GuessedValue<QString> &modName, MOBase::DirectoryTree &tree,
+  virtual bool isArchiveSupported(std::shared_ptr<const MOBase::IFileTree> tree) const;
+  virtual EInstallResult install(MOBase::GuessedValue<QString> &modName, std::shared_ptr<MOBase::IFileTree>&tree,
                                  QString &version, int &modID);
 
 public: // IPluginDiagnose interface
@@ -45,17 +45,35 @@ public: // IPluginDiagnose interface
 
 private:
 
-  const MOBase::DirectoryTree *findFomodDirectory(const MOBase::DirectoryTree *tree) const;
+  /**
+   * @brief Retrieve the tree entry corresponding to the fomod directory.
+   *
+   * @param tree Tree to look-up the directory in.
+   *
+   * @return the entry corresponding to the fomod directory in the tree, or a null pointer if the entry was not found.
+   */
+  std::shared_ptr<const MOBase::IFileTree> findFomodDirectory(std::shared_ptr<const MOBase::IFileTree> tree) const;
 
   /**
-   * @brief build a list of files (relative paths) the fomod installer may require access to
-   * @param tree base tree of the archive
-   * @return list of files that need to be extracted
+   * @brief Build a list of entries that should be extracted sincce the FOMOD installer may require access 
+   *     to (currently the .xml files in the FOMOD directory and the pictures in the archive).
+   *
+   * @param tree Base tree of the archive.
+   *
+   * @return a list of file entries that need to be extracted.
    */
-  QStringList buildFomodTree(MOBase::DirectoryTree &tree);
+  std::vector<std::shared_ptr<const MOBase::FileTreeEntry>> buildFomodTree(std::shared_ptr<const MOBase::IFileTree> tree) const;
 
-  void appendImageFiles(QStringList &result, MOBase::DirectoryTree *tree);
-  MOBase::IPluginList::PluginStates fileState(const QString &fileName);
+  /**
+   * @brief Recurse through the given tree and add all the images to the given vector.
+   *
+   * @param result Vector of entries to add the images.
+   * @param tree The tree to look files in.
+   */
+  void appendImageFiles(
+    std::vector<std::shared_ptr<const MOBase::FileTreeEntry>> &entries, std::shared_ptr<const MOBase::IFileTree> tree) const;
+
+  MOBase::IPluginList::PluginStates fileState(const QString &fileName) const;
 
 private:
 
