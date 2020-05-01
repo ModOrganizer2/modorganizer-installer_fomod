@@ -88,7 +88,7 @@ FomodScreenshotDialog::FomodScreenshotDialog(QWidget *parent, std::vector<std::p
     layout->addWidget(scaleLabel);
     layout->setAlignment(scaleLabel, Qt::AlignLeft | Qt::AlignVCenter);
 
-    size_t column = carouselList->columnCount();
+    int column = carouselList->columnCount();
     carouselList->setColumnCount(column + 1);
     carouselList->setColumnWidth(column, kScreenshotTileWidth + (column+1 == carouselImages.size() ? 0 : kScreenshotTileSpacing));
 
