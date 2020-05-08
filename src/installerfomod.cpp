@@ -220,9 +220,7 @@ IPluginInstaller::EInstallResult InstallerFomod::install(GuessedValue<QString> &
           auto result = dialog.exec();
           if (result == QDialog::Accepted) {
               modName.update(dialog.getName(), GUESS_USER);
-              dialog.updateTree(tree);
-
-              return IPluginInstaller::RESULT_SUCCESS;
+              return dialog.updateTree(tree);
           }
           else {
               if (dialog.manualRequested()) {

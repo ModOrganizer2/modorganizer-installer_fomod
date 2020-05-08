@@ -283,30 +283,7 @@ QString FomodInstallerDialog::getURL() const
   return m_URL;
 }
 
-void FomodInstallerDialog::copyLeaf(std::shared_ptr<IFileTree> sourceTree, QString sourcePath,
-                                    std::shared_ptr<IFileTree> destinationTree, QString destinationPath,
-                                    IFileTree::OverwritesType &overwrites,
-                                    Leaves &leaves, int pri)
-{
-  // Note (Holt59): There was a lot of stuff here that can heavily be reduced.
-  std::shared_ptr<FileTreeEntry> sourceEntry = sourceTree->find(sourcePath);
-
-  if (sourceEntry == nullptr) {
-    qCritical("%s not found!", qUtf8Printable(sourcePath));
-    return;
-  }
-
-  // TODO:
-  applyPriority(leaves, sourceEntry->parent().get(), pri);
-
-  if (destinationPath.endsWith("/") || destinationPath.endsWith("\\")) {
-    destinationPath += sourceEntry->name();
-  }
-
-  destinationTree->move(sourceEntry, destinationPath, IFileTree::InsertPolicy::MERGE);
-}
-
-void FomodInstallerDialog::applyPriority(Leaves &leaves, IFileTree const* tree, int priority)
+void FomodInstallerDialog::applyPriority(Leaves& leaves, IFileTree const* tree, int priority)
 {
   for (auto entry : *tree) {
     if (entry->isDir()) {
@@ -318,6 +295,26 @@ void FomodInstallerDialog::applyPriority(Leaves &leaves, IFileTree const* tree, 
   }
 }
 
+void FomodInstallerDialog::copyLeaf(std::shared_ptr<FileTreeEntry> sourceEntry,
+                                    std::shared_ptr<IFileTree> destinationTree, QString destinationPath,
+                                    IFileTree::OverwritesType &overwrites,
+                                    Leaves &leaves, int pri)
+{
+  // TODO:
+  applyPriority(leaves, sourceEntry->parent().get(), pri);
+
+  if (destinationPath.endsWith("/") || destinationPath.endsWith("\\")) {
+    destinationPath += sourceEntry->name();
+  }
+
+  auto oldEntry = destinationTree->find(destinationPath);
+  if (oldEntry != nullptr) {
+    overwrites[oldEntry] = sourceEntry;
+  }
+
+  destinationTree->move(sourceEntry, destinationPath, IFileTree::InsertPolicy::MERGE);
+}
+
 bool FomodInstallerDialog::copyFileIterator(std::shared_ptr<IFileTree> sourceTree, std::shared_ptr<IFileTree> destinationTree,
                                             const FileDescriptor *descriptor,
                                             Leaves &leaves, IFileTree::OverwritesType &overwrites)
@@ -327,32 +324,37 @@ bool FomodInstallerDialog::copyFileIterator(std::shared_ptr<IFileTree> sourceTre
   int pri = descriptor->m_Priority;
   QString destination = descriptor->m_Destination;
 
-  try {
-    if (descriptor->m_IsFolder) {
-      std::shared_ptr<IFileTree> sourceNode = sourceTree->findDirectory(source);
+  if (descriptor->m_IsFolder) {
+    std::shared_ptr<IFileTree> sourceNode = sourceTree->findDirectory(source);
 
-      // Apply the priority on the source tree:
-      applyPriority(leaves, sourceNode.get(), pri);
-
-      // addDirectory will create the directory if it does not exist:
-      std::shared_ptr<IFileTree> targetNode = destinationTree->addDirectory(destination);
-
-      // Note (Holt59): Before, the directories were processed before the files, and the files were processed
-      // in reverse order. The directories before files was mandatory since both were stored differently, but
-      // I have no idea why the files were processed in reverse order and it does not make sense since there
-      // cannot be two identical file in a tree.
-      targetNode->merge(sourceNode, &overwrites);
-
-    } else {
-      copyLeaf(sourceTree, source, destinationTree, destination, overwrites, leaves, pri);
+    if (sourceNode == nullptr) {
+      log::error("Folder '{}' not found.", source);
+      return false;
     }
-    return true;
-  } 
-  catch (const MyException &e) {
-    qCritical("failed to extract %s to %s: %s",
-              qUtf8Printable(source), qUtf8Printable(destination), e.what());
-    return false;
+
+    // Apply the priority on the source tree:
+    applyPriority(leaves, sourceNode.get(), pri);
+
+    // addDirectory will create the directory if it does not exist:
+    std::shared_ptr<IFileTree> targetNode = destinationTree->addDirectory(destination);
+
+    // Note (Holt59): Before, the directories were processed before the files, and the files were processed
+    // in reverse order. The directories before files was mandatory since both were stored differently, but
+    // I have no idea why the files were processed in reverse order and it does not make sense since there
+    // cannot be two identical file in a tree.
+    targetNode->merge(sourceNode, &overwrites);
+
+  } else {
+    std::shared_ptr<FileTreeEntry> sourceEntry = sourceTree->find(source);
+
+    if (sourceEntry == nullptr) {
+      log::error("File '{}' not found.", source);
+      return false;
+    }
+
+    copyLeaf(sourceEntry, destinationTree, destination, overwrites, leaves, pri);
   }
+  return true;
 }
 
 std::pair<bool, QString> FomodInstallerDialog::testCondition(int maxIndex, const ValueCondition *valCondition) const
@@ -480,7 +482,33 @@ std::pair<bool, QString> FomodInstallerDialog::testCondition(int, const VersionC
       .arg(typeName).arg(condition->m_RequiredVersion).arg(version));
 }
 
-void FomodInstallerDialog::updateTree(std::shared_ptr<IFileTree> &tree)
+
+bool FomodInstallerDialog::displayMissingFilesDialog(std::vector<const FileDescriptor*> missingFiles) 
+{
+  QMessageBox dialog(parentWidget());
+
+  dialog.setIcon(QMessageBox::Icon::Warning);
+  dialog.setWindowTitle(tr("Missing files or folders"));
+  dialog.addButton(tr("Install anyway"), QMessageBox::AcceptRole);
+  dialog.addButton(tr("Cancel"), QMessageBox::RejectRole);
+
+  QString text = tr(
+    "The following files or folders  were not found in the archive. "
+    "This is likely due to an incorrect FOMOD installer. "
+    "This mod may not work properly.");
+  text.append("\n\n");
+  for (auto* fileDescriptor : missingFiles) {
+    QString temp = fileDescriptor->m_IsFolder ? tr("Folder '%1'.") : tr("File '%1'.");
+    text.append("- " + temp.arg(fileDescriptor->m_Source) + "\n");
+  }
+
+  dialog.setTextFormat(Qt::MarkdownText);
+  dialog.setText(text);
+
+  return dialog.exec() == QMessageBox::AcceptRole;
+}
+
+IPluginInstaller::EInstallResult FomodInstallerDialog::updateTree(std::shared_ptr<IFileTree> &tree)
 {
   FileDescriptorList descriptorList;
 
@@ -521,19 +549,31 @@ void FomodInstallerDialog::updateTree(std::shared_ptr<IFileTree> &tree)
   Leaves leaves;
   std::shared_ptr<IFileTree> newTree = tree->createOrphanTree();
 
+  std::vector<const FileDescriptor*> failures;
+
   for (const FileDescriptor *file : descriptorList) {
-    copyFileIterator(tree, newTree, file, leaves, overwrites);
+    if (!copyFileIterator(tree, newTree, file, leaves, overwrites)) {
+      failures.push_back(file);
+    }
+  }
+
+  if (!failures.empty()) {
+    if (!displayMissingFilesDialog(failures)) {
+      return IPluginInstaller::RESULT_CANCELED;
+    }
   }
 
   for (auto overwrite : overwrites) {
     if (leaves[overwrite.first.get()].priority == leaves[overwrite.second.get()].priority) {
       qWarning() << "Overriding " << leaves[overwrite.first.get()].path << " with " <<
-                    leaves[overwrite.second.get()].path << " which has the same priority";
+        leaves[overwrite.second.get()].path << " which has the same priority";
     }
   }
 
   // Update the tree:
   tree = newTree;
+
+  return IPluginInstaller::RESULT_SUCCESS;
 }
 
 

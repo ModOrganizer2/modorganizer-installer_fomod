@@ -21,6 +21,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "guessedvalue.h"
 #include "ipluginlist.h"
+#include "iplugininstaller.h"
 
 #include <QDialog>
 #include <QGroupBox>
@@ -198,7 +199,7 @@ public:
    *
    * @param tree The input archive tree.
    **/
-  void updateTree(std::shared_ptr<MOBase::IFileTree> &tree);
+  MOBase::IPluginInstaller::EInstallResult updateTree(std::shared_ptr<MOBase::IFileTree> &tree);
 
   bool hasOptions();
 
@@ -318,10 +319,6 @@ private:
 
   PluginType getPluginDependencyType(int page, PluginTypeInfo const &info) const;
 
-  bool copyFileIterator(std::shared_ptr<MOBase::IFileTree> sourceTree, std::shared_ptr<MOBase::IFileTree> destinationTree,
-                        const FileDescriptor *descriptor,
-                        Leaves &leaves, MOBase::IFileTree::OverwritesType &overwrites);
-
   typedef void (FomodInstallerDialog::*TagProcessor)(XmlReader &reader);
   void processXmlTag(XmlReader &reader, char const *tag, TagProcessor func);
 
@@ -356,11 +353,24 @@ private:
 
   void moveTree(std::shared_ptr<MOBase::IFileTree> target, std::shared_ptr<MOBase::IFileTree> source, MOBase::IFileTree::OverwritesType &overwrites);
 
-  void copyLeaf(std::shared_ptr<MOBase::IFileTree> sourceTree, QString sourcePath,
+  void copyLeaf(std::shared_ptr<MOBase::FileTreeEntry> sourceEntry,
                 std::shared_ptr<MOBase::IFileTree> destinationTree, QString destinationPath,
                 MOBase::IFileTree::OverwritesType &overwrites, Leaves &leaves, int pri);
 
+  bool copyFileIterator(std::shared_ptr<MOBase::IFileTree> sourceTree, std::shared_ptr<MOBase::IFileTree> destinationTree,
+    const FileDescriptor* descriptor,
+    Leaves& leaves, MOBase::IFileTree::OverwritesType& overwrites);
+
   static void applyPriority(Leaves &leaves, MOBase::IFileTree const *tree, int priority);
+
+  /**
+   * @brief Display a dialog indicating to the user that some files were not found.
+   *
+   * @param missingFiles List of missing files.
+   *
+   * @return true if the user chose to continue with the installation, false otherwize.
+   */
+  bool displayMissingFilesDialog(std::vector<const FileDescriptor*> missingFiles);
 
   static QString toString(MOBase::IPluginList::PluginStates state);
 
