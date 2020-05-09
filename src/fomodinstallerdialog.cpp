@@ -303,7 +303,7 @@ void FomodInstallerDialog::copyLeaf(std::shared_ptr<FileTreeEntry> sourceEntry,
   // TODO:
   applyPriority(leaves, sourceEntry->parent().get(), pri);
 
-  if (destinationPath.endsWith("/") || destinationPath.endsWith("\\")) {
+  if (destinationPath.isEmpty() || destinationPath.endsWith("/") || destinationPath.endsWith("\\")) {
     destinationPath += sourceEntry->name();
   }
 
