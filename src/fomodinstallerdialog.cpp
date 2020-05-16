@@ -312,7 +312,7 @@ void FomodInstallerDialog::copyLeaf(std::shared_ptr<FileTreeEntry> sourceEntry,
     overwrites[oldEntry] = sourceEntry;
   }
 
-  destinationTree->move(sourceEntry, destinationPath, IFileTree::InsertPolicy::MERGE);
+  destinationTree->copy(sourceEntry, destinationPath, IFileTree::InsertPolicy::REPLACE);
 }
 
 bool FomodInstallerDialog::copyFileIterator(std::shared_ptr<IFileTree> sourceTree, std::shared_ptr<IFileTree> destinationTree,
