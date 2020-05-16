@@ -341,8 +341,11 @@ bool FomodInstallerDialog::copyFileIterator(std::shared_ptr<IFileTree> sourceTre
     // Note (Holt59): Before, the directories were processed before the files, and the files were processed
     // in reverse order. The directories before files was mandatory since both were stored differently, but
     // I have no idea why the files were processed in reverse order and it does not make sense since there
-    // cannot be two identical file in a tree.
-    targetNode->merge(sourceNode, &overwrites);
+    // cannot be two identical file in a tree. Also, the files were copied but the directories were moved, I 
+    // am pretty sure this made no sense.
+    for (auto e : *sourceNode) {
+      targetNode->copy(e, "", IFileTree::InsertPolicy::MERGE);
+    }
 
   } else {
     std::shared_ptr<FileTreeEntry> sourceEntry = sourceTree->find(source);
