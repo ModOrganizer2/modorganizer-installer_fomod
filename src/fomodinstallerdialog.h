@@ -19,9 +19,9 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include "directorytree.h"
 #include "guessedvalue.h"
 #include "ipluginlist.h"
+#include "iplugininstaller.h"
 
 #include <QDialog>
 #include <QGroupBox>
@@ -31,6 +31,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <functional>
 #include <vector>
+
+#include "ifiletree.h"
 
 class QAbstractButton;
 class QXmlStreamReader;
@@ -193,14 +195,11 @@ public:
   QString getURL() const;
 
   /**
-   * @brief retrieve the updated archive tree from the dialog. The caller is responsible to delete the returned tree.
+   * @brief Updated the archive tree from the dialog.
    *
-   * @note This call is destructive on the input tree!
-   *
-   * @param tree input tree. (TODO isn't this the same as the tree passed in the constructor?)
-   * @return DataTree* a new tree with only the selected options and directories arranged correctly. The caller takes custody of this pointer!
+   * @param tree The input archive tree.
    **/
-  MOBase::DirectoryTree *updateTree(MOBase::DirectoryTree *tree);
+  MOBase::IPluginInstaller::EInstallResult updateTree(std::shared_ptr<MOBase::IFileTree> &tree);
 
   bool hasOptions();
 
@@ -289,14 +288,26 @@ private:
     QString path;
   };
 
-  typedef std::map<int, LeafInfo> Leaves;
+  using Leaves = std::map<const MOBase::FileTreeEntry*, LeafInfo>;
 
 private:
 
   QString readContent(QXmlStreamReader &reader);
+
+  /**
+   * @brief Read XML from the given file, trying various encoding, and using
+   *     the given callback on each try.
+   *
+   * @param file The file to read, must already be opened.
+   * @param callback The callback used for every encoding try.
+   */
+  void readXml(QFile& file, void (FomodInstallerDialog::* callback)(XmlReader&));
+
   void readInfoXml();
   void readModuleConfigXml();
-  void parseInfo(QXmlStreamReader &data);
+
+  void parseInfo(XmlReader &data);
+  void parseModuleConfig(XmlReader& data);
 
   void updateNameEdit();
 
@@ -307,10 +318,6 @@ private:
   static bool byPriority(const FileDescriptor *LHS, const FileDescriptor *RHS);
 
   PluginType getPluginDependencyType(int page, PluginTypeInfo const &info) const;
-
-  bool copyFileIterator(MOBase::DirectoryTree *sourceTree, MOBase::DirectoryTree *destinationTree,
-                        const FileDescriptor *descriptor,
-                        Leaves *leaves, MOBase::DirectoryTree::Overwrites *overwrites);
 
   typedef void (FomodInstallerDialog::*TagProcessor)(XmlReader &reader);
   void processXmlTag(XmlReader &reader, char const *tag, TagProcessor func);
@@ -332,7 +339,6 @@ private:
   void readConditionalFileInstallList(XmlReader &reader);
   void readStepList(XmlReader &reader);
   void readModuleConfiguration(XmlReader &reader);
-  void parseModuleConfig(XmlReader &data);
   void highlightControl(QAbstractButton *button);
 
   std::pair<bool, QString> testCondition(int maxIndex, const QString &flag, const QString &value) const;
@@ -344,13 +350,27 @@ private:
   bool testVisible(int pageIndex) const;
   bool nextPage();
   void activateCurrentPage();
-  void moveTree(MOBase::DirectoryTree::Node *target, MOBase::DirectoryTree::Node *source, MOBase::DirectoryTree::Overwrites *overwrites);
-  MOBase::DirectoryTree::Node *findNode(MOBase::DirectoryTree::Node *node, const QString &path, bool create);
-  void copyLeaf(MOBase::DirectoryTree::Node *sourceTree, const QString &sourcePath,
-                MOBase::DirectoryTree::Node *destinationTree, const QString &destinationPath,
-                MOBase::DirectoryTree::Overwrites *overwrites, Leaves *leaves, int pri);
 
-  static void applyPriority(Leaves *leaves, MOBase::DirectoryTree::Node *node, int priority);
+  void moveTree(std::shared_ptr<MOBase::IFileTree> target, std::shared_ptr<MOBase::IFileTree> source, MOBase::IFileTree::OverwritesType &overwrites);
+
+  void copyLeaf(std::shared_ptr<MOBase::FileTreeEntry> sourceEntry,
+                std::shared_ptr<MOBase::IFileTree> destinationTree, QString destinationPath,
+                MOBase::IFileTree::OverwritesType &overwrites, Leaves &leaves, int pri);
+
+  bool copyFileIterator(std::shared_ptr<MOBase::IFileTree> sourceTree, std::shared_ptr<MOBase::IFileTree> destinationTree,
+    const FileDescriptor* descriptor,
+    Leaves& leaves, MOBase::IFileTree::OverwritesType& overwrites);
+
+  static void applyPriority(Leaves &leaves, MOBase::IFileTree const *tree, int priority);
+
+  /**
+   * @brief Display a dialog indicating to the user that some files were not found.
+   *
+   * @param missingFiles List of missing files.
+   *
+   * @return true if the user chose to continue with the installation, false otherwize.
+   */
+  bool displayMissingFilesDialog(std::vector<const FileDescriptor*> missingFiles);
 
   static QString toString(MOBase::IPluginList::PluginStates state);
 
