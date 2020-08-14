@@ -554,7 +554,7 @@ IPluginInstaller::EInstallResult FomodInstallerDialog::updateTree(std::shared_pt
   std::vector<const FileDescriptor*> failures;
 
   const QStringList ignoreMissingFolder = m_MoInfo->persistent(
-    m_Installer->name(), "ignore_missing_folders", QStringList{ "no folder" }).toStringList();
+    m_Installer->name(), "ignored_missing_files", QStringList{ "no folder" }).toStringList();
 
   for (const FileDescriptor *file : descriptorList) {
     if (!copyFileIterator(tree, newTree, file, leaves, overwrites)) {
