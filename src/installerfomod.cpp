@@ -202,7 +202,7 @@ IPluginInstaller::EInstallResult InstallerFomod::install(GuessedValue<QString> &
           std::shared_ptr<const IFileTree> fomodTree = findFomodDirectory(tree);
 
           QString fomodPath = fomodTree->parent()->path();
-          FomodInstallerDialog dialog(modName, fomodPath, std::bind(&InstallerFomod::fileState, this, std::placeholders::_1));
+          FomodInstallerDialog dialog(this, modName, fomodPath, std::bind(&InstallerFomod::fileState, this, std::placeholders::_1));
           dialog.initData(m_MOInfo);
           if (!dialog.getVersion().isEmpty()) {
               version = dialog.getVersion();

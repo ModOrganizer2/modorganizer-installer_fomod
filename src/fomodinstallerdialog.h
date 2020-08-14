@@ -22,6 +22,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include "guessedvalue.h"
 #include "ipluginlist.h"
 #include "iplugininstaller.h"
+#include "imoinfo.h"
+#include "ifiletree.h"
 
 #include <QDialog>
 #include <QGroupBox>
@@ -32,17 +34,13 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <functional>
 #include <vector>
 
-#include "ifiletree.h"
+#include "installerfomod.h"
 
 class QAbstractButton;
 class QXmlStreamReader;
 
 namespace Ui {
 class FomodInstallerDialog;
-}
-
-namespace MOBase {
- class IOrganizer;
 }
 
 class ValueCondition;
@@ -161,7 +159,8 @@ class FomodInstallerDialog : public QDialog, public IConditionTester
   Q_OBJECT
 
 public:
-  explicit FomodInstallerDialog(const MOBase::GuessedValue<QString> &modName,
+  explicit FomodInstallerDialog(InstallerFomod *installer,
+                                const MOBase::GuessedValue<QString> &modName,
                                 const QString &fomodPath,
                                 const std::function<MOBase::IPluginList::PluginStates (const QString &)> &fileCheck,
                                 QWidget *parent = 0);
@@ -384,6 +383,7 @@ private:
 
   Ui::FomodInstallerDialog *ui;
 
+  InstallerFomod* m_Installer;
   MOBase::GuessedValue<QString> m_ModName;
 
   int m_ModID;
