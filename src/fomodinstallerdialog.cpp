@@ -75,11 +75,10 @@ bool PagesDescending(QGroupBox *LHS, QGroupBox *RHS)
   return LHS->title() > RHS->title();
 }
 
-
-FomodInstallerDialog::FomodInstallerDialog(const GuessedValue<QString> &modName, const QString &fomodPath,
+FomodInstallerDialog::FomodInstallerDialog(InstallerFomod *installer, const GuessedValue<QString> &modName, const QString &fomodPath,
                                            const std::function<MOBase::IPluginList::PluginStates(const QString &)> &fileCheck,
                                            QWidget *parent)
-  : QDialog(parent), ui(new Ui::FomodInstallerDialog), m_ModName(modName), m_ModID(-1),
+  : QDialog(parent), ui(new Ui::FomodInstallerDialog), m_Installer(installer), m_ModName(modName), m_ModID(-1),
     m_FomodPath(fomodPath), m_Manual(false), m_FileCheck(fileCheck),
     m_FileSystemItemSequence()
 {
@@ -554,9 +553,14 @@ IPluginInstaller::EInstallResult FomodInstallerDialog::updateTree(std::shared_pt
 
   std::vector<const FileDescriptor*> failures;
 
+  const QStringList ignoreMissingFolder = m_MoInfo->persistent(
+    m_Installer->name(), "ignore_missing_folders", QStringList{ "no folder" }).toStringList();
+
   for (const FileDescriptor *file : descriptorList) {
     if (!copyFileIterator(tree, newTree, file, leaves, overwrites)) {
-      failures.push_back(file);
+      if (!ignoreMissingFolder.contains(file->m_Source, FileNameComparator::CaseSensitivity)) {
+        failures.push_back(file);
+      }
     }
   }
 
