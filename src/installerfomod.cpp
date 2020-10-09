@@ -84,6 +84,20 @@ bool InstallerFomod::isManualInstaller() const
   return false;
 }
 
+
+void InstallerFomod::onInstallationStart(QString const& archive, bool reinstallation, IModInterface* currentMod)
+{
+  m_InstallerUsed = false;
+}
+
+
+void InstallerFomod::onInstallationEnd(EInstallResult result, IModInterface* newMod)
+{
+  if (result == EInstallResult::RESULT_SUCCESS && m_InstallerUsed) {
+    newMod->setUrl(m_Url);
+  }
+}
+
 std::shared_ptr<const IFileTree> InstallerFomod::findFomodDirectory(std::shared_ptr<const IFileTree> tree) const
 {
   auto entry = tree->find("fomod", FileTreeEntry::DIRECTORY);
@@ -211,7 +225,8 @@ IPluginInstaller::EInstallResult InstallerFomod::install(GuessedValue<QString> &
               modID = dialog.getModID();
           }
 
-          manager()->setURL(dialog.getURL());
+          m_InstallerUsed = true;
+          m_Url = dialog.getURL();
 
           if (!dialog.hasOptions()) {
               dialog.transformToSmallInstall();
