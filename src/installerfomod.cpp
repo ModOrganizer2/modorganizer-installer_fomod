@@ -93,7 +93,7 @@ void InstallerFomod::onInstallationStart(QString const& archive, bool reinstalla
 
 void InstallerFomod::onInstallationEnd(EInstallResult result, IModInterface* newMod)
 {
-  if (result == EInstallResult::RESULT_SUCCESS && m_InstallerUsed) {
+  if (result == EInstallResult::RESULT_SUCCESS && m_InstallerUsed && newMod->url().isEmpty()) {
     newMod->setUrl(m_Url);
   }
 }
