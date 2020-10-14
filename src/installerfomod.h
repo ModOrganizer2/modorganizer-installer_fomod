@@ -21,19 +21,22 @@ public:
   InstallerFomod();
 
   virtual bool init(MOBase::IOrganizer *moInfo);
-  virtual QString name() const;
-  virtual QString author() const;
-  virtual QString description() const;
-  virtual MOBase::VersionInfo version() const;
-  virtual bool isActive() const;
-  virtual QList<MOBase::PluginSetting> settings() const;
+  virtual QString name() const override;
+  virtual QString author() const override;
+  virtual QString description() const override;
+  virtual MOBase::VersionInfo version() const override;
+  virtual bool isActive() const override;
+  virtual QList<MOBase::PluginSetting> settings() const override;
 
-  virtual unsigned int priority() const;
-  virtual bool isManualInstaller() const;
+  virtual unsigned int priority() const override;
+  virtual bool isManualInstaller() const override;
 
-  virtual bool isArchiveSupported(std::shared_ptr<const MOBase::IFileTree> tree) const;
+  virtual bool isArchiveSupported(std::shared_ptr<const MOBase::IFileTree> tree) const override;
   virtual EInstallResult install(MOBase::GuessedValue<QString> &modName, std::shared_ptr<MOBase::IFileTree>&tree,
-                                 QString &version, int &modID);
+                                 QString &version, int &modID) override;
+
+  virtual void onInstallationStart(QString const& archive, bool reinstallation, MOBase::IModInterface* currentMod) override;
+  virtual void onInstallationEnd(EInstallResult result, MOBase::IModInterface* newMod) override;
 
 public: // IPluginDiagnose interface
 
@@ -85,6 +88,9 @@ private:
 
   bool allowAnyFile() const;
   bool checkDisabledMods() const;
+
+  bool m_InstallerUsed;
+  QString m_Url;
 };
 
 #endif // INSTALLERFOMOD_H
