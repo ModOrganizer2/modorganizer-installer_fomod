@@ -194,7 +194,7 @@ IPluginList::PluginStates InstallerFomod::fileState(const QString &fileName) con
           || (state & IModList::STATE_VALID) == 0) {
         continue;
       }
-      MOBase::IModInterface *modInfo = m_MOInfo->getMod(mod);
+      MOBase::IModInterface *modInfo = m_MOInfo->modList()->getMod(mod);
       // Go see if the file is in the mod
       QDir modpath(modInfo->absolutePath());
       QFile file(modpath.absoluteFilePath(fileName));
