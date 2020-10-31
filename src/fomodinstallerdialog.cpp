@@ -545,7 +545,7 @@ IPluginInstaller::EInstallResult FomodInstallerDialog::updateTree(std::shared_pt
     }
   }
 
-  std::sort(descriptorList.begin(), descriptorList.end(), byPriority);
+  std::stable_sort(descriptorList.begin(), descriptorList.end(), byPriority);
 
   IFileTree::OverwritesType overwrites;
   Leaves leaves;
