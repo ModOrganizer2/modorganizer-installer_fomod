@@ -20,12 +20,12 @@ public:
 
   InstallerFomod();
 
-  virtual bool init(MOBase::IOrganizer *moInfo);
+  virtual bool init(MOBase::IOrganizer* moInfo) override;
   virtual QString name() const override;
+  virtual QString localizedName() const override;
   virtual QString author() const override;
   virtual QString description() const override;
   virtual MOBase::VersionInfo version() const override;
-  virtual bool isActive() const override;
   virtual QList<MOBase::PluginSetting> settings() const override;
 
   virtual unsigned int priority() const override;
@@ -58,7 +58,7 @@ private:
   std::shared_ptr<const MOBase::IFileTree> findFomodDirectory(std::shared_ptr<const MOBase::IFileTree> tree) const;
 
   /**
-   * @brief Build a list of entries that should be extracted sincce the FOMOD installer may require access 
+   * @brief Build a list of entries that should be extracted sincce the FOMOD installer may require access
    *     to (currently the .xml files in the FOMOD directory and the pictures in the archive).
    *
    * @param tree Base tree of the archive.
