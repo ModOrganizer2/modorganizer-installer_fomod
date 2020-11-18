@@ -48,9 +48,9 @@ VersionInfo InstallerFomod::version() const
   return VersionInfo(1, 7, 0, VersionInfo::RELEASE_FINAL);
 }
 
-bool InstallerFomod::isActive() const
+QString InstallerFomod::localizedName() const
 {
-  return m_MOInfo->pluginSetting(name(), "enabled").toBool();
+  return tr("Fomod Installer");
 }
 
 bool InstallerFomod::allowAnyFile() const
@@ -66,7 +66,6 @@ bool InstallerFomod::checkDisabledMods() const
 QList<PluginSetting> InstallerFomod::settings() const
 {
   QList<PluginSetting> result;
-  result.push_back(PluginSetting("enabled", "check to enable this plugin", QVariant(true)));
   result.push_back(PluginSetting("prefer", "prefer this over the NCC based plugin", QVariant(true)));
   result.push_back(PluginSetting("use_any_file", "allow dependencies on any file, not just esp/esm", QVariant(false)));
   result.push_back(PluginSetting("see_disabled_mods", "treat disabled mods as inactive rather than missing", QVariant(false)));
@@ -143,7 +142,7 @@ std::vector<std::shared_ptr<const FileTreeEntry>> InstallerFomod::buildFomodTree
   auto fomodTree = findFomodDirectory(tree);
 
   for (auto entry: *fomodTree) {
-    if (entry->isFile() 
+    if (entry->isFile()
       && (entry->compare("info.xml") == 0 ||
           entry->compare("ModuleConfig.xml") == 0)) {
       entries.push_back(entry);
