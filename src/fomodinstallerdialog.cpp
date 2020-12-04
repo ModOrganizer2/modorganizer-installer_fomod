@@ -241,7 +241,7 @@ void FomodInstallerDialog::readModuleConfigXml()
 {
   QFile file(QDir::tempPath() + "/" + m_FomodPath + "/fomod/ModuleConfig.xml");
   if (!file.open(QIODevice::ReadOnly)) {
-    throw MyException(tr("%1 missing.").arg(file.fileName()));
+    throw Exception(tr("%1 missing.").arg(file.fileName()));
   }
   readXml(file, &FomodInstallerDialog::parseModuleConfig);
 }
@@ -340,7 +340,7 @@ bool FomodInstallerDialog::copyFileIterator(std::shared_ptr<IFileTree> sourceTre
     // Note (Holt59): Before, the directories were processed before the files, and the files were processed
     // in reverse order. The directories before files was mandatory since both were stored differently, but
     // I have no idea why the files were processed in reverse order and it does not make sense since there
-    // cannot be two identical file in a tree. Also, the files were copied but the directories were moved, I 
+    // cannot be two identical file in a tree. Also, the files were copied but the directories were moved, I
     // am pretty sure this made no sense.
     for (auto e : *sourceNode) {
       targetNode->copy(e, "", IFileTree::InsertPolicy::MERGE);
@@ -395,7 +395,7 @@ QString FomodInstallerDialog::toString(IPluginList::PluginStates state)
   if (state.testFlag(IPluginList::STATE_MISSING)) return "Missing";
   if (state.testFlag(IPluginList::STATE_INACTIVE)) return "Inactive";
   if (state.testFlag(IPluginList::STATE_ACTIVE)) return "Active";
-  throw MyException(tr("invalid plugin state %1").arg(state));
+  throw Exception(tr("invalid plugin state %1").arg(state));
 }
 
 std::pair<bool, QString> FomodInstallerDialog::testCondition(int, const FileCondition *condition) const
@@ -485,7 +485,7 @@ std::pair<bool, QString> FomodInstallerDialog::testCondition(int, const VersionC
 }
 
 
-bool FomodInstallerDialog::displayMissingFilesDialog(std::vector<const FileDescriptor*> missingFiles) 
+bool FomodInstallerDialog::displayMissingFilesDialog(std::vector<const FileDescriptor*> missingFiles)
 {
   QMessageBox dialog(parentWidget());
 
@@ -660,7 +660,7 @@ FomodInstallerDialog::ItemOrder FomodInstallerDialog::getItemOrder(const QString
   } else if (orderString == "Explicit") {
     return ORDER_EXPLICIT;
   } else {
-    throw MyException(tr("unsupported order type %1").arg(orderString));
+    throw Exception(tr("unsupported order type %1").arg(orderString));
   }
 }
 
@@ -678,7 +678,7 @@ FomodInstallerDialog::GroupType FomodInstallerDialog::getGroupType(const QString
   } else if (typeString == "SelectAll") {
     return TYPE_SELECTALL;
   } else {
-    throw MyException(tr("unsupported group type %1").arg(typeString));
+    throw Exception(tr("unsupported group type %1").arg(typeString));
   }
 }
 
@@ -1213,7 +1213,7 @@ void FomodInstallerDialog::readModuleConfiguration(XmlReader &reader)
       std::pair<bool, QString> result = testCondition(-1, &condition);
       if (!result.first) {
         //TODO Better messages?
-        throw MyException(result.second);
+        throw Exception(result.second);
       }
     } else if (name == "requiredInstallFiles") {
       readFileList(reader, m_RequiredFiles);
@@ -1239,7 +1239,7 @@ void FomodInstallerDialog::parseModuleConfig(XmlReader &reader)
   if (reader.hasError()) {
     throw XmlParseError(QString("%1 in line %2").arg(reader.errorString()).arg(reader.lineNumber()));
   }
-  //Find the first visible page 
+  //Find the first visible page
   int index = 0;
   while (index < ui->stepsStack->count()) {
     if (testVisible(index)) {
@@ -1590,7 +1590,7 @@ void FomodInstallerDialog::on_screenshotExpand_clicked()
 {
   std::vector<std::pair<QString, QString>> carouselImages;
   int carouselIndex = -1;
-  
+
   for (auto choice : ui->stepsStack->currentWidget()->findChildren<QAbstractButton*>("choice")) {
     QString screenshotFileName = choice->property("screenshot").toString();
 
@@ -1612,7 +1612,7 @@ void FomodInstallerDialog::on_screenshotExpand_clicked()
   // Focus the screenshot carousel on the first screenshot if the user has not selected a choice with a
   // screenshot (or any choice at all)
   carouselIndex = (carouselIndex < 0) ? 0 : carouselIndex;
-  
+
   QDialog* dialog = new FomodScreenshotDialog(this, carouselImages, carouselIndex);
   dialog->show();
 }
