@@ -3,7 +3,7 @@
 #include "utility.h"
 #include <QDebug>
 
-using MOBase::MyException;
+using MOBase::MOException;
 
 bool XmlReader::getNextElement(QString const &start)
 {
@@ -20,7 +20,7 @@ bool XmlReader::getNextElement(QString const &start)
         return true;
 
       case Invalid:
-        throw MyException("bad xml");
+        throw MOException("bad xml");
         return false;
 
       default:
@@ -52,7 +52,7 @@ void XmlReader::finishedElement()
         return;
 
       case Invalid:
-        throw MyException("bad xml");
+        throw MOException("bad xml");
         return;
 
       case StartElement:
