@@ -241,7 +241,7 @@ void FomodInstallerDialog::readModuleConfigXml()
 {
   QFile file(QDir::tempPath() + "/" + m_FomodPath + "/fomod/ModuleConfig.xml");
   if (!file.open(QIODevice::ReadOnly)) {
-    throw MOException(tr("%1 missing.").arg(file.fileName()));
+    throw Exception(tr("%1 missing.").arg(file.fileName()));
   }
   readXml(file, &FomodInstallerDialog::parseModuleConfig);
 }
@@ -395,7 +395,7 @@ QString FomodInstallerDialog::toString(IPluginList::PluginStates state)
   if (state.testFlag(IPluginList::STATE_MISSING)) return "Missing";
   if (state.testFlag(IPluginList::STATE_INACTIVE)) return "Inactive";
   if (state.testFlag(IPluginList::STATE_ACTIVE)) return "Active";
-  throw MOException(tr("invalid plugin state %1").arg(state));
+  throw Exception(tr("invalid plugin state %1").arg(state));
 }
 
 std::pair<bool, QString> FomodInstallerDialog::testCondition(int, const FileCondition *condition) const
@@ -660,7 +660,7 @@ FomodInstallerDialog::ItemOrder FomodInstallerDialog::getItemOrder(const QString
   } else if (orderString == "Explicit") {
     return ORDER_EXPLICIT;
   } else {
-    throw MOException(tr("unsupported order type %1").arg(orderString));
+    throw Exception(tr("unsupported order type %1").arg(orderString));
   }
 }
 
@@ -678,7 +678,7 @@ FomodInstallerDialog::GroupType FomodInstallerDialog::getGroupType(const QString
   } else if (typeString == "SelectAll") {
     return TYPE_SELECTALL;
   } else {
-    throw MOException(tr("unsupported group type %1").arg(typeString));
+    throw Exception(tr("unsupported group type %1").arg(typeString));
   }
 }
 
@@ -1213,7 +1213,7 @@ void FomodInstallerDialog::readModuleConfiguration(XmlReader &reader)
       std::pair<bool, QString> result = testCondition(-1, &condition);
       if (!result.first) {
         //TODO Better messages?
-        throw MOException(result.second);
+        throw Exception(result.second);
       }
     } else if (name == "requiredInstallFiles") {
       readFileList(reader, m_RequiredFiles);

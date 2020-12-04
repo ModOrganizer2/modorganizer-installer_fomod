@@ -276,7 +276,7 @@ QString InstallerFomod::shortDescription(unsigned int key) const
     case PROBLEM_IMAGETYPE_UNSUPPORTED:
       return tr("image formats not supported.");
     default:
-      throw MOException(tr("invalid problem key %1").arg(key));
+      throw Exception(tr("invalid problem key %1").arg(key));
   }
 }
 
@@ -287,7 +287,7 @@ QString InstallerFomod::fullDescription(unsigned int key) const
       return tr("This indicates that files from dlls/imageformats are missing from your MO installation or outdated. "
                 "Images in installers may not be displayed. Please re-install MO");
     default:
-      throw MOException(tr("invalid problem key %1").arg(key));
+      throw Exception(tr("invalid problem key %1").arg(key));
   }
 }
 
