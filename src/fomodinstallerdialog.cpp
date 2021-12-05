@@ -154,20 +154,20 @@ QByteArray skipXmlHeader(QIODevice &file)
   QTextStream stream(&file);
   int bom = 0;
   if (rawBytes.startsWith((const char*)UTF16LE_BOM)) {
-    stream.setCodec("UTF16-LE");
+    stream.setEncoding(QStringConverter::Encoding::Utf16LE);
     bom = 2;
   } else if (rawBytes.startsWith((const char*)UTF16BE_BOM)) {
-    stream.setCodec("UTF16-BE");
+    stream.setEncoding(QStringConverter::Encoding::Utf16BE);
     bom = 2;
   } else if (rawBytes.startsWith((const char*)UTF8_BOM)) {
-    stream.setCodec("UTF-8");
+    stream.setEncoding(QStringConverter::Encoding::Utf8);
     bom = 3;
   } else if (rawBytes.startsWith(QByteArray((const char *)UTF16LE, 4))) {
-    stream.setCodec("UTF16-LE");
+    stream.setEncoding(QStringConverter::Encoding::Utf16LE);
   } else if (rawBytes.startsWith(QByteArray((const char *)UTF16BE, 4))) {
-    stream.setCodec("UTF16-BE");
+    stream.setEncoding(QStringConverter::Encoding::Utf16BE);
   } else if (rawBytes.startsWith(QByteArray((const char*)UTF8, 4))) {
-    stream.setCodec("UTF-8");
+    stream.setEncoding(QStringConverter::Encoding::Utf8);
   } // otherwise maybe the textstream knows the encoding?
 
   stream.seek(bom);
@@ -627,16 +627,16 @@ void FomodInstallerDialog::parseInfo(XmlReader &reader)
   while (!reader.atEnd()) {
     switch (reader.readNext()) {
       case QXmlStreamReader::StartElement: {
-        if (reader.name() == "Name") {
+        if (reader.name().toString() == "Name") {
           m_ModName.update(readContent(reader), GUESS_META);
           updateNameEdit();
-        } else if (reader.name() == "Author") {
+        } else if (reader.name().toString() == "Author") {
           ui->authorLabel->setText(readContent(reader));
-        } else if (reader.name() == "Version") {
+        } else if (reader.name().toString() == "Version") {
           ui->versionLabel->setText(readContent(reader));
-        } else if (reader.name() == "Id") {
+        } else if (reader.name().toString() == "Id") {
           m_ModID = readContent(reader).toInt();
-        } else if (reader.name() == "Website") {
+        } else if (reader.name().toString() == "Website") {
           m_URL = readContent(reader);
           ui->websiteLabel->setText(tr("<a href=\"%1\">Link</a>").arg(m_URL));
           ui->websiteLabel->setToolTip(m_URL);
@@ -706,7 +706,7 @@ void FomodInstallerDialog::readFileList(XmlReader &reader, FileDescriptorList &f
 {
   QString const self(reader.name().toString());
   while (reader.getNextElement(self)) {
-    if (reader.name() == "folder" || reader.name() == "file") {
+    if (reader.name().toString() == "folder" || reader.name().toString() == "file") {
       QXmlStreamAttributes attributes = reader.attributes();
       //This is a horrendous hack. It doesn't make sense to specify an empty source folder name,
       //as it would require you to copy everything including the fomod directory. However, people
@@ -718,7 +718,7 @@ void FomodInstallerDialog::readFileList(XmlReader &reader, FileDescriptorList &f
       //Similarly, I'm not checking for the destination if the source is blank. Why'd you want to
       //copy the fomod directory on an install?
       if (attributes.value("source").isEmpty()) {
-        log::debug("Ignoring {} entry with empty source.", reader.name());
+        log::debug("Ignoring {} entry with empty source.", reader.name().toString());
       } else {
         FileDescriptor *file = new FileDescriptor(this);
         file->m_Source = attributes.value("source").toString();
@@ -727,7 +727,7 @@ void FomodInstallerDialog::readFileList(XmlReader &reader, FileDescriptorList &f
         file->m_Priority = attributes.hasAttribute("priority") ? attributes.value("priority").toString().toInt()
                                                                : 0;
         file->m_FileSystemItemSequence = ++m_FileSystemItemSequence;
-        file->m_IsFolder = reader.name() == "folder";
+        file->m_IsFolder = reader.name().toString() == "folder";
         file->m_InstallIfUsable = attributes.hasAttribute("installIfUsable") ? (attributes.value("installIfUsable").compare((QString)"true") == 0)
                                                                              : false;
         file->m_AlwaysInstall = attributes.hasAttribute("alwaysInstall") ? (attributes.value("alwaysInstall").compare((QString)"true") == 0)
@@ -749,9 +749,9 @@ void FomodInstallerDialog::readDependencyPattern(XmlReader &reader, DependencyPa
   //  type
   QString self(reader.name().toString());
   while (reader.getNextElement(self)) {
-    if (reader.name() == "dependencies") {
+    if (reader.name().toString() == "dependencies") {
       readCompositeDependency(reader, pattern.condition);
-    } else if (reader.name() == "type") {
+    } else if (reader.name().toString() == "type") {
       pattern.type = getPluginType(reader.attributes().value("name").toString());
       reader.finishedElement();
     } else {
@@ -764,7 +764,7 @@ void FomodInstallerDialog::readDependencyPatternList(XmlReader &reader, Dependen
 {
   QString self(reader.name().toString());
   while (reader.getNextElement(self)) {
-    if (reader.name() == "pattern") {
+    if (reader.name().toString() == "pattern") {
       DependencyPattern pattern;
       readDependencyPattern(reader, pattern);
       patterns.push_back(pattern);
@@ -781,10 +781,10 @@ void FomodInstallerDialog::readDependencyPluginType(XmlReader &reader, PluginTyp
   // patterns
   QString const self(reader.name().toString());
   while (reader.getNextElement(self)) {
-    if (reader.name() == "defaultType") {
+    if (reader.name().toString() == "defaultType") {
       info.m_DefaultType = getPluginType(reader.attributes().value("name").toString());
       reader.finishedElement();
-    } else if (reader.name() == "patterns") {
+    } else if (reader.name().toString() == "patterns") {
       readDependencyPatternList(reader, info.m_DependencyPatterns);
     } else {
       reader.unexpected();
@@ -799,10 +799,10 @@ void FomodInstallerDialog::readPluginType(XmlReader &reader, Plugin &plugin)
   plugin.m_PluginTypeInfo.m_DefaultType = TYPE_OPTIONAL;
   QString const self(reader.name().toString());
   while (reader.getNextElement(self)) {
-    if (reader.name() == "type") {
+    if (reader.name().toString() == "type") {
       plugin.m_PluginTypeInfo.m_DefaultType = getPluginType(reader.attributes().value("name").toString());
       reader.finishedElement();
-    } else if (reader.name() == "dependencyType") {
+    } else if (reader.name().toString() == "dependencyType") {
       readDependencyPluginType(reader, plugin.m_PluginTypeInfo);
     } else {
       reader.unexpected();
@@ -815,7 +815,7 @@ void FomodInstallerDialog::readConditionFlagList(XmlReader &reader, ConditionFla
 {
   QString const self(reader.name().toString());
   while (reader.getNextElement(self)) {
-    if (reader.name() == "flag") {
+    if (reader.name().toString() == "flag") {
       QString name = reader.attributes().value("name").toString();
       QString content = reader.getText().trimmed();
       condflags.push_back(ConditionFlag(name, content));
@@ -841,16 +841,16 @@ FomodInstallerDialog::Plugin FomodInstallerDialog::readPlugin(XmlReader &reader)
 
   QString const self(reader.name().toString());
   while (reader.getNextElement(self)) {
-    if (reader.name() == "description") {
+    if (reader.name().toString() == "description") {
       result.m_Description = reader.getText().trimmed();
-    } else if (reader.name() == "image") {
+    } else if (reader.name().toString() == "image") {
       result.m_ImagePath = reader.attributes().value("path").toString();
       reader.finishedElement();
-    } else if (reader.name() == "files") {
+    } else if (reader.name().toString() == "files") {
       readFileList(reader, result.m_Files);
-    } else if (reader.name() == "conditionFlags") {
+    } else if (reader.name().toString() == "conditionFlags") {
       readConditionFlagList(reader, result.m_ConditionFlags);
-    } else if (reader.name() == "typeDescriptor") {
+    } else if (reader.name().toString() == "typeDescriptor") {
       readPluginType(reader, result);
     } else {
       reader.unexpected();
@@ -888,7 +888,7 @@ void FomodInstallerDialog::readPluginList(XmlReader &reader, QString const &grou
   std::vector<Plugin> plugins;
   QString const self(reader.name().toString());
   while (reader.getNextElement(self)) {
-    if (reader.name() == "plugin") {
+    if (reader.name().toString() == "plugin") {
       plugins.push_back(readPlugin(reader));
     } else {
       reader.unexpected();
@@ -943,20 +943,20 @@ void FomodInstallerDialog::readPluginList(XmlReader &reader, QString const &grou
     }
     newControl->setObjectName("choice");
     newControl->setAttribute(Qt::WA_Hover);
-    QVariant type(qVariantFromValue(plugin.m_PluginTypeInfo));
+    QVariant type(QVariant::fromValue(plugin.m_PluginTypeInfo));
     newControl->setProperty("plugintypeinfo", type);
     newControl->setProperty("screenshot", plugin.m_ImagePath);
     newControl->setProperty("description", plugin.m_Description);
     QVariantList fileList;
     //This looks horrible...
     for (FileDescriptor * const &descriptor : plugin.m_Files) {
-      fileList.append(qVariantFromValue(descriptor));
+      fileList.append(QVariant::fromValue(descriptor));
     }
     newControl->setProperty("files", fileList);
     QVariantList conditionFlags;
     for (ConditionFlag const &conditionFlag : plugin.m_ConditionFlags) {
       if (! conditionFlag.m_Name.isEmpty()) {
-        conditionFlags.append(qVariantFromValue(conditionFlag));
+        conditionFlags.append(QVariant::fromValue(conditionFlag));
 
       }
     }
@@ -997,14 +997,14 @@ void FomodInstallerDialog::readGroup(XmlReader &reader, QLayout *layout)
 
   QString const self(reader.name().toString());
   while (reader.getNextElement(self)) {
-    if (reader.name() == "plugins") {
+    if (reader.name().toString() == "plugins") {
       readPluginList(reader, name, type, groupLayout);
     } else {
       reader.unexpected();
     }
   }
 
-  groupLayout->setProperty("groupType", qVariantFromValue(type));
+  groupLayout->setProperty("groupType", QVariant::fromValue(type));
   groupLayout->setObjectName("grouplayout");
   groupBox->setLayout(groupLayout);
   if (type == TYPE_SELECTATLEASTONE) {
@@ -1020,7 +1020,7 @@ void FomodInstallerDialog::readGroupList(XmlReader &reader, QLayout *layout)
 {
   QString const self(reader.name().toString());
   while (reader.getNextElement(self)) {
-    if (reader.name() == "group") {
+    if (reader.name().toString() == "group") {
       readGroup(reader, layout);
     } else {
       reader.unexpected();
@@ -1044,9 +1044,9 @@ QGroupBox *FomodInstallerDialog::readInstallStep(XmlReader &reader)
   //  optionalFileGroups
   QString const self(reader.name().toString());
   while (reader.getNextElement(self)) {
-    if (reader.name() == "visible") {
+    if (reader.name().toString() == "visible") {
       readCompositeDependency(reader, subcondition);
-    } else if (reader.name() == "optionalFileGroups") {
+    } else if (reader.name().toString() == "optionalFileGroups") {
       readGroupList(reader, scrollLayout);
     } else {
       reader.unexpected();
@@ -1056,7 +1056,7 @@ QGroupBox *FomodInstallerDialog::readInstallStep(XmlReader &reader)
   if (subcondition.m_Conditions.size() != 0) {
     //FIXME Is this actually OK? I'm storing a pointer in the property?
     //Also AFAICS this is subject to memory leaks
-    page->setProperty("conditional", qVariantFromValue(subcondition));
+    page->setProperty("conditional", QVariant::fromValue(subcondition));
   }
 
   scrolledArea->setLayout(scrollLayout);
@@ -1078,7 +1078,7 @@ void FomodInstallerDialog::readStepList(XmlReader &reader)
   //sequence installStep (1 or more)
   QString const self(reader.name().toString());
   while (reader.getNextElement(self)) {
-    if (reader.name() == "installStep") {
+    if (reader.name().toString() == "installStep") {
       pages.push_back(readInstallStep(reader));
     } else {
       reader.unexpected();
@@ -1101,7 +1101,8 @@ void FomodInstallerDialog::readCompositeDependency(XmlReader &reader, SubConditi
 {
   conditional.m_Operator = OP_AND;
   if (reader.attributes().hasAttribute("operator")) {
-    QStringRef dependencyOperator = reader.attributes().value("operator");
+    auto opString = reader.attributes().value("operator").toString();
+    QStringRef dependencyOperator(&opString);
     if (dependencyOperator == "Or") {
       conditional.m_Operator = OP_OR;
     } else if (dependencyOperator != "And") {
@@ -1111,7 +1112,8 @@ void FomodInstallerDialog::readCompositeDependency(XmlReader &reader, SubConditi
 
   QString const self = reader.name().toString();
   while (reader.getNextElement(self)) {
-    QStringRef name = reader.name();
+    auto elString = reader.name().toString();
+    QStringRef name(&elString);
     if (name == "fileDependency") {
       conditional.m_Conditions.push_back(new FileCondition(reader.attributes().value("file").toString(),
                                                            reader.attributes().value("state").toString()));
@@ -1152,9 +1154,9 @@ FomodInstallerDialog::ConditionalInstall FomodInstallerDialog::readConditionalIn
   result.m_Condition.m_Operator = OP_AND;
   QString const self(reader.name().toString());
   while (reader.getNextElement(self)) {
-    if (reader.name() == "dependencies") {
+    if (reader.name().toString() == "dependencies") {
       readCompositeDependency(reader, result.m_Condition);
-    } else if (reader.name() == "files") {
+    } else if (reader.name().toString() == "files") {
       readFileList(reader, result.m_Files);
     } else {
       reader.unexpected();
@@ -1167,7 +1169,7 @@ void FomodInstallerDialog::readConditionalFilePatternList(XmlReader &reader)
 {
   QString const self(reader.name().toString());
   while (reader.getNextElement(self)) {
-    if (reader.name() == "pattern") {
+    if (reader.name().toString() == "pattern") {
       m_ConditionalInstalls.push_back(readConditionalInstallPattern(reader));
     } else {
       reader.unexpected();
@@ -1180,7 +1182,7 @@ void FomodInstallerDialog::readConditionalFileInstallList(XmlReader &reader)
   QString const self(reader.name().toString());
   //Technically there should be only one but it's easier to write like this
   while (reader.getNextElement(self)) {
-    if (reader.name() == "patterns") {
+    if (reader.name().toString() == "patterns") {
       readConditionalFilePatternList(reader);
     } else {
       reader.unexpected();
@@ -1200,7 +1202,8 @@ void FomodInstallerDialog::readModuleConfiguration(XmlReader &reader)
   //  optional - conditionalFileInstalls
   QString const self(reader.name().toString());
   while (reader.getNextElement(self)) {
-    QStringRef name = reader.name();
+    auto elString = reader.name().toString();
+    QStringRef name(&elString);
     if (name == "moduleName") {
       QString title = reader.getText();
       qDebug() << "module name : "  << title;
@@ -1259,7 +1262,7 @@ void FomodInstallerDialog::parseModuleConfig(XmlReader &reader)
 
 void FomodInstallerDialog::processXmlTag(XmlReader &reader, char const *tag, TagProcessor func)
 {
-  if (reader.readNext() == XmlReader::StartElement && reader.name() == tag) {
+  if (reader.readNext() == XmlReader::StartElement && reader.name().toString() == tag) {
     (this->*func)(reader);
   } else if (! reader.hasError()) {
     reader.raiseError(QString("Expected %1, got %2").arg(tag).arg(reader.name().toString()));

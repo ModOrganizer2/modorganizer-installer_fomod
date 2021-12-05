@@ -24,7 +24,7 @@ void ScaleLabel::setScalableResource(const QString& path)
     delete m;
     m_OriginalMovieSize = QSize();
   }
-  if (pixmap()) {
+  if (!pixmap().isNull()) {
     setPixmap(QPixmap());
     m_UnscaledImage = QImage();
   }
@@ -101,9 +101,8 @@ void ScaleLabel::resizeEvent(QResizeEvent *event)
       m->stop();
     }
   }
-  if (auto p = pixmap()) {
-    if (!p->isNull()) {
-      setPixmap(QPixmap::fromImage(m_UnscaledImage).scaled(event->size(), Qt::KeepAspectRatio));
-    }
+  auto p = pixmap();
+  if (!p.isNull()) {
+    setPixmap(QPixmap::fromImage(m_UnscaledImage).scaled(event->size(), Qt::KeepAspectRatio));
   }
 }
