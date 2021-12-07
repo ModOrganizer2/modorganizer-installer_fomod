@@ -38,7 +38,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QImage>
 #include <QRadioButton>
 #include <QScrollArea>
-#include <QTextCodec>
 
 #include <Shellapi.h>
 
@@ -184,7 +183,7 @@ QByteArray skipXmlHeader(QIODevice &file)
 void FomodInstallerDialog::readXml(QFile &file, void (FomodInstallerDialog::* callback)(XmlReader &))
 {
   // List of encodings to try:
-  static const std::vector<const char *> encodings{ "utf-16", "utf-8", "iso-8859-1" };
+  static const std::vector<QStringConverter::Encoding> encodings{QStringConverter::Encoding::Utf16, QStringConverter::Encoding::Utf8, QStringConverter::Encoding::Latin1};
 
   bool success = false;
   std::string errorMessage;
@@ -207,8 +206,8 @@ void FomodInstallerDialog::readXml(QFile &file, void (FomodInstallerDialog::* ca
     for (auto encoding: encodings) {
       log::debug("Trying encoding {} for {}... ", encoding, file.fileName());
       try {
-        QTextCodec* codec = QTextCodec::codecForName(encoding);
-        XmlReader reader(codec->fromUnicode(QString("<?xml version=\"1.0\" encoding=\"%1\" ?>").arg(encoding)) + headerlessData);
+        QStringEncoder encoder(encoding);
+        XmlReader reader(encoder.encode(QString("<?xml version=\"1.0\" encoding=\"%1\" ?>").arg(encoder.name())) + headerlessData);
         (this->*callback)(reader);
         log::debug("Interpreting {} as {}.", file.fileName(), encoding);
         success = true;
@@ -1102,39 +1101,37 @@ void FomodInstallerDialog::readCompositeDependency(XmlReader &reader, SubConditi
   conditional.m_Operator = OP_AND;
   if (reader.attributes().hasAttribute("operator")) {
     auto opString = reader.attributes().value("operator").toString();
-    QStringRef dependencyOperator(&opString);
-    if (dependencyOperator == "Or") {
+    if (opString == "Or") {
       conditional.m_Operator = OP_OR;
-    } else if (dependencyOperator != "And") {
-      qWarning() << "Expected 'and' or 'or' at line " << reader.lineNumber() << ", got " << dependencyOperator;
+    } else if (opString != "And") {
+      qWarning() << "Expected 'and' or 'or' at line " << reader.lineNumber() << ", got " << opString;
     } // OP_AND is the default, set at the beginning of the function
   }
 
   QString const self = reader.name().toString();
   while (reader.getNextElement(self)) {
     auto elString = reader.name().toString();
-    QStringRef name(&elString);
-    if (name == "fileDependency") {
+    if (elString == "fileDependency") {
       conditional.m_Conditions.push_back(new FileCondition(reader.attributes().value("file").toString(),
                                                            reader.attributes().value("state").toString()));
       reader.finishedElement();
-    } else if (name == "flagDependency") {
+    } else if (elString == "flagDependency") {
       conditional.m_Conditions.push_back(new ValueCondition(reader.attributes().value("flag").toString(),
                                                             reader.attributes().value("value").toString()));
       reader.finishedElement();
-    } else if (name == "gameDependency") {
+    } else if (elString == "gameDependency") {
       conditional.m_Conditions.push_back(new VersionCondition(VersionCondition::v_Game,
                                                               reader.attributes().value("version").toString()));
       reader.finishedElement();
-    } else if (name == "fommDependency") {
+    } else if (elString == "fommDependency") {
       conditional.m_Conditions.push_back(new VersionCondition(VersionCondition::v_FOMM,
                                                               reader.attributes().value("version").toString()));
       reader.finishedElement();
-    } else if (name == "foseDependency") {
+    } else if (elString == "foseDependency") {
       conditional.m_Conditions.push_back(new VersionCondition(VersionCondition::v_FOSE,
                                                               reader.attributes().value("version").toString()));
       reader.finishedElement();
-    } else if (name == "dependencies") {
+    } else if (elString == "dependencies") {
       SubCondition *nested = new SubCondition();
       readCompositeDependency(reader, *nested);
       conditional.m_Conditions.push_back(nested);
@@ -1203,14 +1200,13 @@ void FomodInstallerDialog::readModuleConfiguration(XmlReader &reader)
   QString const self(reader.name().toString());
   while (reader.getNextElement(self)) {
     auto elString = reader.name().toString();
-    QStringRef name(&elString);
-    if (name == "moduleName") {
+    if (elString == "moduleName") {
       QString title = reader.getText();
       qDebug() << "module name : "  << title;
-    } else if (name == "moduleImage") {
+    } else if (elString == "moduleImage") {
       //do something useful with the attributes of this
       reader.finishedElement();
-    } else if (name == "moduleDependencies") {
+    } else if (elString == "moduleDependencies") {
       SubCondition condition;
       readCompositeDependency(reader, condition);
       std::pair<bool, QString> result = testCondition(-1, &condition);
@@ -1218,11 +1214,11 @@ void FomodInstallerDialog::readModuleConfiguration(XmlReader &reader)
         //TODO Better messages?
         throw Exception(result.second);
       }
-    } else if (name == "requiredInstallFiles") {
+    } else if (elString == "requiredInstallFiles") {
       readFileList(reader, m_RequiredFiles);
-    } else if (name == "installSteps") {
+    } else if (elString == "installSteps") {
       readStepList(reader);
-    } else if (name == "conditionalFileInstalls") {
+    } else if (elString == "conditionalFileInstalls") {
       readConditionalFileInstallList(reader);
     } else {
       reader.unexpected();
