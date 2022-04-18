@@ -41,8 +41,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <Shellapi.h>
 
-#include <boost/assign.hpp>
-
 #include <array>
 #include <sstream>
 #include <utility>
