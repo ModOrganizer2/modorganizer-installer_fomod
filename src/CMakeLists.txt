@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-if(DEFINED DEPENDENCIES_DIR)
-	include(${DEPENDENCIES_DIR}/modorganizer_super/cmake_common/src.cmake)
-else()
-	include(../../cmake_common/src.cmake)
-endif()
-requires_project(game_features)
+
+add_library(installer_fomod SHARED)
+mo2_configure_plugin(installer_fomod WARNINGS OFF)
+mo2_install_target(installer_fomod)
