@@ -38,6 +38,7 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QImage>
 #include <QRadioButton>
 #include <QScrollArea>
+#include <QStringEncoder>
 
 #include <Shellapi.h>
 
