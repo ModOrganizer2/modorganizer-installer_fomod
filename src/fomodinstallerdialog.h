@@ -275,11 +275,13 @@ private:
     PluginTypeInfo m_PluginTypeInfo;
     ConditionFlagList m_ConditionFlags;
     FileDescriptorList m_Files;
+    bool m_IsRoot{false};
   };
 
   struct ConditionalInstall {
     SubCondition m_Condition;
     FileDescriptorList m_Files;
+    bool m_IsRoot{false};
   };
 
   struct LeafInfo {
@@ -321,7 +323,7 @@ private:
   typedef void (FomodInstallerDialog::*TagProcessor)(XmlReader &reader);
   void processXmlTag(XmlReader &reader, char const *tag, TagProcessor func);
 
-  void readFileList(XmlReader &reader, FileDescriptorList &fileList);
+  void readFileList(XmlReader &reader, FileDescriptorList &fileList, bool& isBool);
   void readDependencyPattern(XmlReader &reader, DependencyPattern &pattern);
   void readDependencyPatternList(XmlReader &reader, DependencyPatternList &patterns);
   void readDependencyPluginType(XmlReader &reader, PluginTypeInfo &info);
@@ -390,6 +392,8 @@ private:
 
   QString m_FomodPath;
   bool m_Manual;
+  bool m_IsRoot;
+  bool m_IsRootConditional;
 
   FileDescriptorList m_RequiredFiles;
   std::vector<ConditionalInstall> m_ConditionalInstalls;

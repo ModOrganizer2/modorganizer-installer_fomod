@@ -78,7 +78,7 @@ FomodInstallerDialog::FomodInstallerDialog(InstallerFomod *installer, const Gues
                                            QWidget *parent)
   : QDialog(parent), ui(new Ui::FomodInstallerDialog), m_Installer(installer), m_ModName(modName), m_ModID(-1),
     m_FomodPath(fomodPath), m_Manual(false), m_FileCheck(fileCheck),
-    m_FileSystemItemSequence()
+    m_FileSystemItemSequence(), m_IsRoot(false)
 {
   ui->setupUi(this);
   setWindowFlags(windowFlags() | Qt::WindowMaximizeButtonHint);
@@ -319,7 +319,14 @@ bool FomodInstallerDialog::copyFileIterator(std::shared_ptr<IFileTree> sourceTre
   QString source = (m_FomodPath.length() != 0) ? (m_FomodPath + "\\" + descriptor->m_Source)
                                                : descriptor->m_Source;
   int pri = descriptor->m_Priority;
-  QString destination = descriptor->m_Destination;
+  QString destination = QDir::toNativeSeparators(descriptor->m_Destination);
+  if (m_IsRoot || m_IsRootConditional) {
+    if (destination.startsWith("Data\\", Qt::CaseInsensitive)) {
+      destination = destination.sliced(5);
+    } else {
+      destination = "Root\\" + destination;
+    }
+  }
 
   if (descriptor->m_IsFolder) {
     std::shared_ptr<IFileTree> sourceNode = sourceTree->findDirectory(source);
@@ -511,6 +518,7 @@ bool FomodInstallerDialog::displayMissingFilesDialog(std::vector<const FileDescr
 IPluginInstaller::EInstallResult FomodInstallerDialog::updateTree(std::shared_ptr<IFileTree> &tree)
 {
   FileDescriptorList descriptorList;
+  m_IsRootConditional = false;
 
   // enable all required files
   for (FileDescriptor *file : m_RequiredFiles) {
@@ -522,6 +530,8 @@ IPluginInstaller::EInstallResult FomodInstallerDialog::updateTree(std::shared_pt
     SubCondition *condition = &cond.m_Condition;
     std::pair<bool, QString> result = condition->test(ui->stepsStack->count(), this);
     if (result.first) {
+      if (cond.m_IsRoot)
+        m_IsRootConditional = true;
       for (FileDescriptor *file : cond.m_Files) {
         descriptorList.push_back(file);
       }
@@ -536,6 +546,10 @@ IPluginInstaller::EInstallResult FomodInstallerDialog::updateTree(std::shared_pt
         if (choice->isChecked()) {
           QVariantList fileList = choice->property("files").toList();
           for (QVariant fileVariant : fileList) {
+            QString dest = QDir::toNativeSeparators(
+              fileVariant.value<FileDescriptor*>()->m_Destination);
+            if (dest.startsWith("Data\\", Qt::CaseInsensitive))
+              m_IsRootConditional = true;
             descriptorList.push_back(fileVariant.value<FileDescriptor*>());
           }
         }
@@ -700,7 +714,7 @@ FomodInstallerDialog::PluginType FomodInstallerDialog::getPluginType(const QStri
 }
 
 
-void FomodInstallerDialog::readFileList(XmlReader &reader, FileDescriptorList &fileList)
+void FomodInstallerDialog::readFileList(XmlReader &reader, FileDescriptorList &fileList, bool &isRoot)
 {
   QString const self(reader.name().toString());
   while (reader.getNextElement(self)) {
@@ -730,6 +744,10 @@ void FomodInstallerDialog::readFileList(XmlReader &reader, FileDescriptorList &f
                                                                              : false;
         file->m_AlwaysInstall = attributes.hasAttribute("alwaysInstall") ? (attributes.value("alwaysInstall").compare((QString)"true") == 0)
                                                                          : false;
+
+        if (QDir::toNativeSeparators(file->m_Destination)
+                .startsWith("Data\\", Qt::CaseInsensitive))
+            isRoot = true;
 
         fileList.push_back(file);
       }
@@ -845,7 +863,7 @@ FomodInstallerDialog::Plugin FomodInstallerDialog::readPlugin(XmlReader &reader)
       result.m_ImagePath = reader.attributes().value("path").toString();
       reader.finishedElement();
     } else if (reader.name().toString() == "files") {
-      readFileList(reader, result.m_Files);
+      readFileList(reader, result.m_Files, result.m_IsRoot);
     } else if (reader.name().toString() == "conditionFlags") {
       readConditionFlagList(reader, result.m_ConditionFlags);
     } else if (reader.name().toString() == "typeDescriptor") {
@@ -1153,7 +1171,7 @@ FomodInstallerDialog::ConditionalInstall FomodInstallerDialog::readConditionalIn
     if (reader.name().toString() == "dependencies") {
       readCompositeDependency(reader, result.m_Condition);
     } else if (reader.name().toString() == "files") {
-      readFileList(reader, result.m_Files);
+      readFileList(reader, result.m_Files, result.m_IsRoot);
     } else {
       reader.unexpected();
     }
@@ -1214,7 +1232,7 @@ void FomodInstallerDialog::readModuleConfiguration(XmlReader &reader)
         throw Exception(result.second);
       }
     } else if (elString == "requiredInstallFiles") {
-      readFileList(reader, m_RequiredFiles);
+      readFileList(reader, m_RequiredFiles, m_IsRoot);
     } else if (elString == "installSteps") {
       readStepList(reader);
     } else if (elString == "conditionalFileInstalls") {
