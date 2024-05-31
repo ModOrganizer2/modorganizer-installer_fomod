@@ -464,7 +464,7 @@ std::pair<bool, QString> FomodInstallerDialog::testCondition(int, const VersionC
       break;
 
     case VersionCondition::v_FOSE: {
-      ScriptExtender *extender = game->feature<ScriptExtender>();
+      ScriptExtender *extender = m_MoInfo->gameFeatures()->gameFeature<ScriptExtender>();
       if (extender != nullptr) {
         version = extender->getExtenderVersion();
         typeName = extender->BinaryName();
