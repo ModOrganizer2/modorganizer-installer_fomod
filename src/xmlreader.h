@@ -3,15 +3,12 @@
 
 #include <QXmlStreamReader>
 
-class XmlReader : public QXmlStreamReader {
- public:
-  XmlReader(QIODevice *device) :
-    QXmlStreamReader(device)
-  { }
+class XmlReader : public QXmlStreamReader
+{
+public:
+  XmlReader(QIODevice* device) : QXmlStreamReader(device) {}
 
-  XmlReader(QByteArray array) :
-    QXmlStreamReader(array)
-  { }
+  XmlReader(QByteArray array) : QXmlStreamReader(array) {}
 
   /** Get the next token, ignoring comments and white space text */
   TokenType readNext()
@@ -28,7 +25,7 @@ class XmlReader : public QXmlStreamReader {
    *
    * \returns false if no more elements
    */
-  bool getNextElement(QString const &start);
+  bool getNextElement(QString const& start);
 
   /* Get the text associated with this token. */
   QString getText();
@@ -40,5 +37,4 @@ class XmlReader : public QXmlStreamReader {
   void finishedElement();
 };
 
-
-#endif // XMLREADER_H
+#endif  // XMLREADER_H
