@@ -20,10 +20,10 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "guessedvalue.h"
-#include "ipluginlist.h"
-#include "iplugininstaller.h"
-#include "imoinfo.h"
 #include "ifiletree.h"
+#include "imoinfo.h"
+#include "iplugininstaller.h"
+#include "ipluginlist.h"
 
 #include <QDialog>
 #include <QGroupBox>
@@ -39,7 +39,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 class QAbstractButton;
 class QXmlStreamReader;
 
-namespace Ui {
+namespace Ui
+{
 class FomodInstallerDialog;
 }
 
@@ -51,93 +52,140 @@ class VersionCondition;
 
 class XmlReader;
 
-class IConditionTester {
+class IConditionTester
+{
 public:
-  virtual std::pair<bool, QString> testCondition(int maxIndex, const ValueCondition *condition) const = 0;
-  virtual std::pair<bool, QString> testCondition(int maxIndex, const ConditionFlag *condition) const = 0;
-  virtual std::pair<bool, QString> testCondition(int maxIndex, const SubCondition *condition) const = 0;
-  virtual std::pair<bool, QString> testCondition(int maxIndex, const FileCondition *condition) const = 0;
-  virtual std::pair<bool, QString> testCondition(int maxIndex, const VersionCondition *condition) const = 0;
+  virtual std::pair<bool, QString>
+  testCondition(int maxIndex, const ValueCondition* condition) const = 0;
+  virtual std::pair<bool, QString>
+  testCondition(int maxIndex, const ConditionFlag* condition) const = 0;
+  virtual std::pair<bool, QString>
+  testCondition(int maxIndex, const SubCondition* condition) const = 0;
+  virtual std::pair<bool, QString>
+  testCondition(int maxIndex, const FileCondition* condition) const = 0;
+  virtual std::pair<bool, QString>
+  testCondition(int maxIndex, const VersionCondition* condition) const = 0;
 };
 
-
-enum ConditionOperator {
+enum ConditionOperator
+{
   OP_AND,
   OP_OR
 };
 
-class Condition {
+class Condition
+{
 public:
-  Condition() { }
-  virtual std::pair<bool, QString> test(int maxIndex, const IConditionTester *tester) const = 0;
+  Condition() {}
+  virtual std::pair<bool, QString> test(int maxIndex,
+                                        const IConditionTester* tester) const = 0;
+
 private:
-  Condition &operator=(const Condition&) = delete;
+  Condition& operator=(const Condition&) = delete;
 };
 
-class ConditionFlag : public Condition {
+class ConditionFlag : public Condition
+{
 public:
   ConditionFlag() : Condition(), m_Name(), m_Value() {}
-  ConditionFlag(const QString &name, const QString &value) : Condition(), m_Name(name), m_Value(value) { }
-  virtual std::pair<bool, QString> test(int maxIndex, const IConditionTester *tester) const { return tester->testCondition(maxIndex, this); }
+  ConditionFlag(const QString& name, const QString& value)
+      : Condition(), m_Name(name), m_Value(value)
+  {}
+  virtual std::pair<bool, QString> test(int maxIndex,
+                                        const IConditionTester* tester) const
+  {
+    return tester->testCondition(maxIndex, this);
+  }
   QString m_Name;
   QString m_Value;
 };
 Q_DECLARE_METATYPE(ConditionFlag)
 
-class ValueCondition : public Condition {
+class ValueCondition : public Condition
+{
 public:
   ValueCondition() : Condition(), m_Name(), m_Value() {}
-  ValueCondition(const QString &name, const QString &value) : Condition(), m_Name(name), m_Value(value) { }
-  virtual std::pair<bool, QString> test(int maxIndex, const IConditionTester *tester) const { return tester->testCondition(maxIndex, this); }
+  ValueCondition(const QString& name, const QString& value)
+      : Condition(), m_Name(name), m_Value(value)
+  {}
+  virtual std::pair<bool, QString> test(int maxIndex,
+                                        const IConditionTester* tester) const
+  {
+    return tester->testCondition(maxIndex, this);
+  }
   QString m_Name;
   QString m_Value;
 };
 Q_DECLARE_METATYPE(ValueCondition)
 
-class FileCondition : public Condition {
+class FileCondition : public Condition
+{
 public:
   FileCondition() : Condition(), m_File(), m_State() {}
-  FileCondition(const QString &file, const QString &state) : Condition(), m_File(file), m_State(state) {}
-  virtual std::pair<bool, QString> test(int maxIndex, const IConditionTester *tester) const { return tester->testCondition(maxIndex, this); }
+  FileCondition(const QString& file, const QString& state)
+      : Condition(), m_File(file), m_State(state)
+  {}
+  virtual std::pair<bool, QString> test(int maxIndex,
+                                        const IConditionTester* tester) const
+  {
+    return tester->testCondition(maxIndex, this);
+  }
   QString m_File;
   QString m_State;
 };
 Q_DECLARE_METATYPE(FileCondition)
 
-class SubCondition : public Condition {
+class SubCondition : public Condition
+{
 public:
-  virtual std::pair<bool, QString> test(int maxIndex, const IConditionTester *tester) const { return tester->testCondition(maxIndex, this); }
+  virtual std::pair<bool, QString> test(int maxIndex,
+                                        const IConditionTester* tester) const
+  {
+    return tester->testCondition(maxIndex, this);
+  }
   ConditionOperator m_Operator;
   std::vector<Condition*> m_Conditions;
 };
 Q_DECLARE_METATYPE(SubCondition)
 
-class VersionCondition : public Condition {
+class VersionCondition : public Condition
+{
 public:
-  enum Type { v_Game, v_FOMM, v_FOSE };
+  enum Type
+  {
+    v_Game,
+    v_FOMM,
+    v_FOSE
+  };
   VersionCondition() : Condition(), m_Type(), m_RequiredVersion() {}
-  VersionCondition(Type type, const QString &requiredVersion) : Condition(), m_Type(type), m_RequiredVersion(requiredVersion) { }
-  virtual std::pair<bool, QString> test(int maxIndex, const IConditionTester *tester) const { return tester->testCondition(maxIndex, this); }
+  VersionCondition(Type type, const QString& requiredVersion)
+      : Condition(), m_Type(type), m_RequiredVersion(requiredVersion)
+  {}
+  virtual std::pair<bool, QString> test(int maxIndex,
+                                        const IConditionTester* tester) const
+  {
+    return tester->testCondition(maxIndex, this);
+  }
   Type m_Type;
   QString m_RequiredVersion;
 };
 Q_DECLARE_METATYPE(VersionCondition)
 
-
-class FileDescriptor : public QObject {
+class FileDescriptor : public QObject
+{
   Q_OBJECT
 public:
-  FileDescriptor(QObject *parent)
-    : QObject(parent), m_Source(), m_Destination(), m_Priority(0), m_IsFolder(false), m_AlwaysInstall(false),
-      m_InstallIfUsable(false),
-      m_FileSystemItemSequence(0)
+  FileDescriptor(QObject* parent)
+      : QObject(parent), m_Source(), m_Destination(), m_Priority(0), m_IsFolder(false),
+        m_AlwaysInstall(false), m_InstallIfUsable(false), m_FileSystemItemSequence(0)
   {}
 
-  FileDescriptor(const FileDescriptor &reference)
-    : QObject(reference.parent()), m_Source(reference.m_Source), m_Destination(reference.m_Destination),
-      m_Priority(reference.m_Priority), m_IsFolder(reference.m_IsFolder), m_AlwaysInstall(reference.m_AlwaysInstall),
-      m_InstallIfUsable(reference.m_InstallIfUsable),
-      m_FileSystemItemSequence(reference.m_FileSystemItemSequence)
+  FileDescriptor(const FileDescriptor& reference)
+      : QObject(reference.parent()), m_Source(reference.m_Source),
+        m_Destination(reference.m_Destination), m_Priority(reference.m_Priority),
+        m_IsFolder(reference.m_IsFolder), m_AlwaysInstall(reference.m_AlwaysInstall),
+        m_InstallIfUsable(reference.m_InstallIfUsable),
+        m_FileSystemItemSequence(reference.m_FileSystemItemSequence)
   {}
 
   QString m_Source;
@@ -147,26 +195,26 @@ public:
   bool m_AlwaysInstall;
   bool m_InstallIfUsable;
   int m_FileSystemItemSequence;
+
 private:
-  FileDescriptor &operator=(const FileDescriptor&);
+  FileDescriptor& operator=(const FileDescriptor&);
 };
 
 Q_DECLARE_METATYPE(FileDescriptor*)
-
 
 class FomodInstallerDialog : public QDialog, public IConditionTester
 {
   Q_OBJECT
 
 public:
-  explicit FomodInstallerDialog(InstallerFomod *installer,
-                                const MOBase::GuessedValue<QString> &modName,
-                                const QString &fomodPath,
-                                const std::function<MOBase::IPluginList::PluginStates (const QString &)> &fileCheck,
-                                QWidget *parent = 0);
+  explicit FomodInstallerDialog(
+      InstallerFomod* installer, const MOBase::GuessedValue<QString>& modName,
+      const QString& fomodPath,
+      const std::function<MOBase::IPluginList::PluginStates(const QString&)>& fileCheck,
+      QWidget* parent = 0);
   ~FomodInstallerDialog();
 
-  void initData(MOBase::IOrganizer *moInfo);
+  void initData(MOBase::IOrganizer* moInfo);
 
   /**
    * @return bool true if the user requested the manual dialog
@@ -198,15 +246,15 @@ public:
    *
    * @param tree The input archive tree.
    **/
-  MOBase::IPluginInstaller::EInstallResult updateTree(std::shared_ptr<MOBase::IFileTree> &tree);
+  MOBase::IPluginInstaller::EInstallResult
+  updateTree(std::shared_ptr<MOBase::IFileTree>& tree);
 
   bool hasOptions();
 
   void transformToSmallInstall();
 
 protected:
-
-  virtual bool eventFilter(QObject *object, QEvent *event);
+  virtual bool eventFilter(QObject* object, QEvent* event);
 
 private slots:
 
@@ -214,28 +262,29 @@ private slots:
 
   void on_manualBtn_clicked();
 
-  void on_websiteLabel_linkActivated(const QString &link);
+  void on_websiteLabel_linkActivated(const QString& link);
 
   void on_nextBtn_clicked();
 
   void on_prevBtn_clicked();
 
-  //detect signals for people playing with checkboxes/buttons
+  // detect signals for people playing with checkboxes/buttons
   void widgetButtonClicked();
 
   void on_screenshotExpand_clicked();
 
 private:
-
-  enum ItemOrder {
+  enum ItemOrder
+  {
     ORDER_ASCENDING,
     ORDER_DESCENDING,
     ORDER_EXPLICIT
   };
 
-//So I can make GroupType and PluginTypeInfo into QVariants
+  // So I can make GroupType and PluginTypeInfo into QVariants
 public:
-  enum GroupType {
+  enum GroupType
+  {
     TYPE_SELECTATLEASTONE,
     TYPE_SELECTATMOSTONE,
     TYPE_SELECTEXACTLYONE,
@@ -243,7 +292,8 @@ public:
     TYPE_SELECTALL
   };
 
-  enum PluginType {
+  enum PluginType
+  {
     TYPE_REQUIRED,
     TYPE_RECOMMENDED,
     TYPE_OPTIONAL,
@@ -251,7 +301,8 @@ public:
     TYPE_COULDBEUSABLE
   };
 
-  struct DependencyPattern {
+  struct DependencyPattern
+  {
     PluginType type;
     SubCondition condition;
   };
@@ -268,7 +319,8 @@ private:
   typedef std::vector<FileDescriptor*> FileDescriptorList;
   typedef std::vector<ConditionFlag> ConditionFlagList;
 
-  struct Plugin {
+  struct Plugin
+  {
     QString m_Name;
     QString m_Description;
     QString m_ImagePath;
@@ -277,12 +329,14 @@ private:
     FileDescriptorList m_Files;
   };
 
-  struct ConditionalInstall {
+  struct ConditionalInstall
+  {
     SubCondition m_Condition;
     FileDescriptorList m_Files;
   };
 
-  struct LeafInfo {
+  struct LeafInfo
+  {
     int priority;
     QString path;
   };
@@ -290,8 +344,7 @@ private:
   using Leaves = std::map<const MOBase::FileTreeEntry*, LeafInfo>;
 
 private:
-
-  QString readContent(QXmlStreamReader &reader);
+  QString readContent(QXmlStreamReader& reader);
 
   /**
    * @brief Read XML from the given file, trying various encoding, and using
@@ -300,67 +353,79 @@ private:
    * @param file The file to read, must already be opened.
    * @param callback The callback used for every encoding try.
    */
-  void readXml(QFile& file, void (FomodInstallerDialog::* callback)(XmlReader&));
+  void readXml(QFile& file, void (FomodInstallerDialog::*callback)(XmlReader&));
 
   void readInfoXml();
   void readModuleConfigXml();
 
-  void parseInfo(XmlReader &data);
+  void parseInfo(XmlReader& data);
   void parseModuleConfig(XmlReader& data);
 
   void updateNameEdit();
 
-  static int bomOffset(const QByteArray &buffer);
-  static ItemOrder getItemOrder(const QString &orderString);
-  static GroupType getGroupType(const QString &typeString);
-  static PluginType getPluginType(const QString &typeString);
-  static bool byPriority(const FileDescriptor *LHS, const FileDescriptor *RHS);
+  static int bomOffset(const QByteArray& buffer);
+  static ItemOrder getItemOrder(const QString& orderString);
+  static GroupType getGroupType(const QString& typeString);
+  static PluginType getPluginType(const QString& typeString);
+  static bool byPriority(const FileDescriptor* LHS, const FileDescriptor* RHS);
 
-  PluginType getPluginDependencyType(int page, PluginTypeInfo const &info) const;
+  PluginType getPluginDependencyType(int page, PluginTypeInfo const& info) const;
 
-  typedef void (FomodInstallerDialog::*TagProcessor)(XmlReader &reader);
-  void processXmlTag(XmlReader &reader, char const *tag, TagProcessor func);
+  typedef void (FomodInstallerDialog::*TagProcessor)(XmlReader& reader);
+  void processXmlTag(XmlReader& reader, char const* tag, TagProcessor func);
 
-  void readFileList(XmlReader &reader, FileDescriptorList &fileList);
-  void readDependencyPattern(XmlReader &reader, DependencyPattern &pattern);
-  void readDependencyPatternList(XmlReader &reader, DependencyPatternList &patterns);
-  void readDependencyPluginType(XmlReader &reader, PluginTypeInfo &info);
-  void readPluginType(XmlReader &reader, Plugin &plugin);
-  void readConditionFlagList(XmlReader &reader, ConditionFlagList &condflags);
-  FomodInstallerDialog::Plugin readPlugin(XmlReader &reader);
-  void readPluginList(XmlReader &reader, QString const &groupName, GroupType &groupType, QLayout *layout);
-  void readGroup(XmlReader &reader, QLayout *layout);
-  void readGroupList(XmlReader &reader, QLayout *layout);
-  QGroupBox *readInstallStep(XmlReader &reader);
-  void readCompositeDependency(XmlReader &reader, SubCondition &conditional);
-  ConditionalInstall readConditionalInstallPattern(XmlReader &reader);
-  void readConditionalFilePatternList(XmlReader &reader);
-  void readConditionalFileInstallList(XmlReader &reader);
-  void readStepList(XmlReader &reader);
-  void readModuleConfiguration(XmlReader &reader);
-  void highlightControl(QAbstractButton *button);
+  void readFileList(XmlReader& reader, FileDescriptorList& fileList);
+  void readDependencyPattern(XmlReader& reader, DependencyPattern& pattern);
+  void readDependencyPatternList(XmlReader& reader, DependencyPatternList& patterns);
+  void readDependencyPluginType(XmlReader& reader, PluginTypeInfo& info);
+  void readPluginType(XmlReader& reader, Plugin& plugin);
+  void readConditionFlagList(XmlReader& reader, ConditionFlagList& condflags);
+  FomodInstallerDialog::Plugin readPlugin(XmlReader& reader);
+  void readPluginList(XmlReader& reader, QString const& groupName, GroupType& groupType,
+                      QLayout* layout);
+  void readGroup(XmlReader& reader, QLayout* layout);
+  void readGroupList(XmlReader& reader, QLayout* layout);
+  QGroupBox* readInstallStep(XmlReader& reader);
+  void readCompositeDependency(XmlReader& reader, SubCondition& conditional);
+  ConditionalInstall readConditionalInstallPattern(XmlReader& reader);
+  void readConditionalFilePatternList(XmlReader& reader);
+  void readConditionalFileInstallList(XmlReader& reader);
+  void readStepList(XmlReader& reader);
+  void readModuleConfiguration(XmlReader& reader);
+  void highlightControl(QAbstractButton* button);
 
-  std::pair<bool, QString> testCondition(int maxIndex, const QString &flag, const QString &value) const;
-  virtual std::pair<bool, QString> testCondition(int maxIndex, const ValueCondition *condition) const;
-  virtual std::pair<bool, QString> testCondition(int maxIndex, const ConditionFlag *condition) const;
-  virtual std::pair<bool, QString> testCondition(int maxIndex, const SubCondition *condition) const;
-  virtual std::pair<bool, QString> testCondition(int maxIndex, const FileCondition *condition) const;
-  virtual std::pair<bool, QString> testCondition(int maxIndex, const VersionCondition *condition) const;
+  std::pair<bool, QString> testCondition(int maxIndex, const QString& flag,
+                                         const QString& value) const;
+  virtual std::pair<bool, QString> testCondition(int maxIndex,
+                                                 const ValueCondition* condition) const;
+  virtual std::pair<bool, QString> testCondition(int maxIndex,
+                                                 const ConditionFlag* condition) const;
+  virtual std::pair<bool, QString> testCondition(int maxIndex,
+                                                 const SubCondition* condition) const;
+  virtual std::pair<bool, QString> testCondition(int maxIndex,
+                                                 const FileCondition* condition) const;
+  virtual std::pair<bool, QString>
+  testCondition(int maxIndex, const VersionCondition* condition) const;
   bool testVisible(int pageIndex) const;
   bool nextPage();
   void activateCurrentPage();
 
-  void moveTree(std::shared_ptr<MOBase::IFileTree> target, std::shared_ptr<MOBase::IFileTree> source, MOBase::IFileTree::OverwritesType &overwrites);
+  void moveTree(std::shared_ptr<MOBase::IFileTree> target,
+                std::shared_ptr<MOBase::IFileTree> source,
+                MOBase::IFileTree::OverwritesType& overwrites);
 
   void copyLeaf(std::shared_ptr<MOBase::FileTreeEntry> sourceEntry,
-                std::shared_ptr<MOBase::IFileTree> destinationTree, QString destinationPath,
-                MOBase::IFileTree::OverwritesType &overwrites, Leaves &leaves, int pri);
+                std::shared_ptr<MOBase::IFileTree> destinationTree,
+                QString destinationPath, MOBase::IFileTree::OverwritesType& overwrites,
+                Leaves& leaves, int pri);
 
-  bool copyFileIterator(std::shared_ptr<MOBase::IFileTree> sourceTree, std::shared_ptr<MOBase::IFileTree> destinationTree,
-    const FileDescriptor* descriptor,
-    Leaves& leaves, MOBase::IFileTree::OverwritesType& overwrites);
+  bool copyFileIterator(std::shared_ptr<MOBase::IFileTree> sourceTree,
+                        std::shared_ptr<MOBase::IFileTree> destinationTree,
+                        const FileDescriptor* descriptor, Leaves& leaves,
+                        MOBase::IFileTree::OverwritesType& overwrites);
 
-  static void applyPriority(Leaves &leaves, MOBase::IFileTree const *tree, int priority);
+  static void applyPriority(Leaves& leaves, MOBase::IFileTree const* tree,
+                            int priority);
 
   /**
    * @brief Display a dialog indicating to the user that some files were not found.
@@ -373,15 +438,14 @@ private:
 
   static QString toString(MOBase::IPluginList::PluginStates state);
 
-  //Set the 'next' button to display 'next' or 'install'
+  // Set the 'next' button to display 'next' or 'install'
   void updateNextbtnText();
 
-  //Display the current page calculating all the button enables/disables
+  // Display the current page calculating all the button enables/disables
   void displayCurrentPage();
 
 private:
-
-  Ui::FomodInstallerDialog *ui;
+  Ui::FomodInstallerDialog* ui;
 
   InstallerFomod* m_Installer;
   MOBase::GuessedValue<QString> m_ModName;
@@ -395,18 +459,17 @@ private:
   std::vector<ConditionalInstall> m_ConditionalInstalls;
   std::vector<bool> m_PageVisible;
 
-  std::function<MOBase::IPluginList::PluginStates (const QString&)> m_FileCheck;
+  std::function<MOBase::IPluginList::PluginStates(const QString&)> m_FileCheck;
 
-  //Because NMM maintains the sequence from the xml when dealing with things with
-  //the same priority, we have to as well. This is moderately hacky.
+  // Because NMM maintains the sequence from the xml when dealing with things with
+  // the same priority, we have to as well. This is moderately hacky.
   int m_FileSystemItemSequence;
 
-  //So I can find out game info (I hope)
-  MOBase::IOrganizer *m_MoInfo;
+  // So I can find out game info (I hope)
+  MOBase::IOrganizer* m_MoInfo;
 
-  //The web page in the fomod (if supplied)
+  // The web page in the fomod (if supplied)
   QString m_URL;
-
 };
 
 Q_DECLARE_METATYPE(FomodInstallerDialog::GroupType)

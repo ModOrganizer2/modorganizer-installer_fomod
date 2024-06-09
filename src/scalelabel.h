@@ -9,17 +9,18 @@ class ScaleLabel : public QLabel
 {
   Q_OBJECT
 public:
-  explicit ScaleLabel(QWidget *parent = nullptr);
+  explicit ScaleLabel(QWidget* parent = nullptr);
 
-  void setScalableResource(const QString &path);
+  void setScalableResource(const QString& path);
   void setStatic(bool isStatic);
 signals:
 
 public slots:
 protected:
-  virtual void resizeEvent(QResizeEvent *event);
+  virtual void resizeEvent(QResizeEvent* event);
+
 private:
-  void setScalableMovie(const QString &path);
+  void setScalableMovie(const QString& path);
   void setScalableImage(const QString& path);
 
   QImage m_UnscaledImage;
@@ -27,4 +28,4 @@ private:
   bool m_isStatic = false;
 };
 
-#endif // SCALELABEL_H
+#endif  // SCALELABEL_H

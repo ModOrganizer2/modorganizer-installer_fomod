@@ -6,7 +6,8 @@
 #include <utility>
 #include <vector>
 
-namespace Ui {
+namespace Ui
+{
 class FomodScreenshotDialog;
 }
 
@@ -15,7 +16,9 @@ class FomodScreenshotDialog : public QDialog
   Q_OBJECT
 
 public:
-  explicit FomodScreenshotDialog(QWidget *parent, std::vector<std::pair<QString, QString>> carouselImages, int carouselIndex);
+  explicit FomodScreenshotDialog(
+      QWidget* parent, std::vector<std::pair<QString, QString>> carouselImages,
+      int carouselIndex);
   ~FomodScreenshotDialog();
 
 private slots:
@@ -27,6 +30,6 @@ private:
   void selectedScreenshotChanged();
   int getSelectedScreenshot();
 
-  Ui::FomodScreenshotDialog *ui;
+  Ui::FomodScreenshotDialog* ui;
   std::vector<std::pair<QString, QString>> m_carouselImages;
 };
