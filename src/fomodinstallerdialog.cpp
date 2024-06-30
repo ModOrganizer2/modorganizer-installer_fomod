@@ -440,7 +440,7 @@ FomodInstallerDialog::testCondition(int, const FileCondition* condition) const
                    .arg(trPluginStates.at(result).toLower()));
 }
 
-namespace
+namespace FOMOD
 {
 class Version
 {
@@ -469,7 +469,7 @@ bool operator<=(Version const& lhs, Version const& rhs)
   return lhs.m_version <= rhs.m_version;
 }
 
-}  // namespace
+}  // namespace FOMOD
 
 std::pair<bool, QString>
 FomodInstallerDialog::testCondition(int, const VersionCondition* condition) const
@@ -502,7 +502,7 @@ FomodInstallerDialog::testCondition(int, const VersionCondition* condition) cons
     }
   } break;
   }
-  if (Version(condition->m_RequiredVersion) <= Version(version))
+  if (FOMOD::Version(condition->m_RequiredVersion) <= FOMOD::Version(version))
     return std::make_pair<bool, QString>(
         true, tr("Success: The required version of %1 is %2, and was detected as %3.")
                   .arg(typeName)
