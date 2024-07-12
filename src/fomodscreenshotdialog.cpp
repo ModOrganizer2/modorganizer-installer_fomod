@@ -16,11 +16,8 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 */
-
 #include "fomodscreenshotdialog.h"
 #include "ui_fomodscreenshotdialog.h"
-
-#include "scalelabel.h"
 
 #include <QDirIterator>
 #include <QFrame>
@@ -29,6 +26,8 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 #include <QScreen>
 #include <QTableWidget>
 #include <QWindow>
+
+#include "scalelabel.h"
 
 constexpr int kScreenshotTileWidth   = 100;
 constexpr int kScreenshotTileHeight  = 80;

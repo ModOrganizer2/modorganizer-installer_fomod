@@ -1,4 +1,5 @@
 #include "scalelabel.h"
+
 #include <QResizeEvent>
 
 static bool isResourceMovie(const QString& path)
