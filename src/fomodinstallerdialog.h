@@ -19,12 +19,6 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include "guessedvalue.h"
-#include "ifiletree.h"
-#include "imoinfo.h"
-#include "iplugininstaller.h"
-#include "ipluginlist.h"
-
 #include <QDialog>
 #include <QGroupBox>
 #include <QMetaType>
@@ -33,6 +27,12 @@ along with Mod Organizer.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <functional>
 #include <vector>
+
+#include <uibase/guessedvalue.h>
+#include <uibase/ifiletree.h>
+#include <uibase/imoinfo.h>
+#include <uibase/iplugininstaller.h>
+#include <uibase/ipluginlist.h>
 
 #include "installerfomod.h"
 

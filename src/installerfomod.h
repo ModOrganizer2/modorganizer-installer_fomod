@@ -1,9 +1,9 @@
 #ifndef INSTALLERFOMOD_H
 #define INSTALLERFOMOD_H
 
-#include <iplugindiagnose.h>
-#include <iplugininstallersimple.h>
-#include <ipluginlist.h>
+#include <uibase/iplugindiagnose.h>
+#include <uibase/iplugininstallersimple.h>
+#include <uibase/ipluginlist.h>
 
 class InstallerFomod : public MOBase::IPluginInstallerSimple,
                        public MOBase::IPluginDiagnose
@@ -13,7 +13,7 @@ class InstallerFomod : public MOBase::IPluginInstallerSimple,
   Q_INTERFACES(MOBase::IPlugin MOBase::IPluginInstaller MOBase::IPluginInstallerSimple
                    MOBase::IPluginDiagnose)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 0, 0)
-  Q_PLUGIN_METADATA(IID "org.tannin.InstallerFomod" FILE "installerfomod.json")
+  Q_PLUGIN_METADATA(IID "org.tannin.InstallerFomod")
 #endif
 
 public:

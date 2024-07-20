@@ -1,7 +1,8 @@
 #include "xmlreader.h"
 
-#include "utility.h"
 #include <QDebug>
+
+#include <uibase/utility.h>
 
 using MOBase::Exception;
 
