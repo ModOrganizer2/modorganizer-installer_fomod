@@ -23,7 +23,6 @@ bool XmlReader::getNextElement(QString const& start)
 
     case Invalid:
       throw Exception("bad xml");
-      return false;
 
     default:
       qWarning() << "Unexpected token type " << tokenString() << " at " << lineNumber();

@@ -1,0 +1,34 @@
+{
+  "id": "mo2-installer-fomod",
+  "name": "FOMOD Installer",
+  "version": "1.8.0",
+  "description": "Installer for XML based FOMOD archives.",
+  "author": {
+    "name": "Mod Organizer 2",
+    "homepage": "https://www.modorganizer.org/"
+  },
+  "contributors": [
+    "AL",
+    "AnyOldName3",
+    "Drew Warwick",
+    "Hugues92",
+    "Holt59",
+    "isanae",
+    "Krzysztof Starecki",
+    "LePresidente",
+    "LostDragonist",
+    "Silarn",
+    "Tannin",
+    "TheBloke",
+    "Thomas Tanner"
+  ],
+  "type": "plugin",
+  "content": {
+    "plugins": {
+      "autodetect": true
+    },
+    "translations": {
+      "autodetect": "translations"
+    }
+  }
+}
