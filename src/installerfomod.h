@@ -22,10 +22,7 @@ public:
   virtual bool init(MOBase::IOrganizer* moInfo) override;
   virtual QString name() const override;
   virtual QString localizedName() const override;
-  virtual QString author() const override;
-  virtual QString description() const override;
-  virtual MOBase::VersionInfo version() const override;
-  virtual QList<MOBase::PluginSetting> settings() const override;
+  virtual QList<MOBase::Setting> settings() const override;
 
   virtual unsigned int priority() const override;
   virtual bool isManualInstaller() const override;

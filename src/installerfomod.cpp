@@ -28,21 +28,6 @@ QString InstallerFomod::name() const
   return "Fomod Installer";
 }
 
-QString InstallerFomod::author() const
-{
-  return "Tannin & thosrtanner";
-}
-
-QString InstallerFomod::description() const
-{
-  return tr("Installer for xml based fomod archives.");
-}
-
-VersionInfo InstallerFomod::version() const
-{
-  return VersionInfo(1, 7, 0, VersionInfo::RELEASE_FINAL);
-}
-
 QString InstallerFomod::localizedName() const
 {
   return tr("Fomod Installer");
@@ -58,18 +43,13 @@ bool InstallerFomod::checkDisabledMods() const
   return m_MOInfo->pluginSetting(name(), "see_disabled_mods").toBool();
 }
 
-QList<PluginSetting> InstallerFomod::settings() const
+QList<Setting> InstallerFomod::settings() const
 {
-  QList<PluginSetting> result;
-  result.push_back(
-      PluginSetting("prefer", "prefer this over the NCC based plugin", QVariant(true)));
-  result.push_back(PluginSetting("use_any_file",
-                                 "allow dependencies on any file, not just esp/esm",
-                                 QVariant(false)));
-  result.push_back(PluginSetting("see_disabled_mods",
-                                 "treat disabled mods as inactive rather than missing",
-                                 QVariant(false)));
-  return result;
+  return {Setting("use_any_file", "Any file as dependency",
+                  "Allow dependencies on any file, not just esp/esm.", QVariant(false)),
+          Setting("see_disabled_mods", "See disabled mods",
+                  "Treat disabled mods as inactive rather than missing.",
+                  QVariant(false))};
 }
 
 unsigned int InstallerFomod::priority() const
@@ -82,8 +62,7 @@ bool InstallerFomod::isManualInstaller() const
   return false;
 }
 
-void InstallerFomod::onInstallationStart(QString const& archive, bool reinstallation,
-                                         IModInterface* currentMod)
+void InstallerFomod::onInstallationStart(QString const&, bool, IModInterface*)
 {
   m_InstallerUsed = false;
 }
@@ -216,9 +195,10 @@ InstallerFomod::install(GuessedValue<QString>& modName,
       std::shared_ptr<const IFileTree> fomodTree = findFomodDirectory(tree);
 
       QString fomodPath = fomodTree->parent()->path();
-      FomodInstallerDialog dialog(
-          this, modName, fomodPath,
-          std::bind(&InstallerFomod::fileState, this, std::placeholders::_1));
+      FomodInstallerDialog dialog(this, modName, fomodPath,
+                                  [this](QString const& file) {
+                                    return fileState(file);
+                                  });
       dialog.initData(m_MOInfo);
       if (!dialog.getVersion().isEmpty()) {
         version = dialog.getVersion();
