@@ -1,7 +1,8 @@
 #include "xmlreader.h"
 
-#include "utility.h"
 #include <QDebug>
+
+#include <uibase/utility.h>
 
 using MOBase::Exception;
 
@@ -22,7 +23,6 @@ bool XmlReader::getNextElement(QString const& start)
 
     case Invalid:
       throw Exception("bad xml");
-      return false;
 
     default:
       qWarning() << "Unexpected token type " << tokenString() << " at " << lineNumber();

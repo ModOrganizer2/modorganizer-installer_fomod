@@ -1,17 +1,17 @@
 #include "installerfomod.h"
 
-#include "fomodinstallerdialog.h"
-#include "imodinterface.h"
-#include "imodlist.h"
-
-#include <iinstallationmanager.h>
-#include <log.h>
-#include <report.h>
-#include <utility.h>
-
 #include <QImageReader>
 #include <QStringList>
 #include <QtPlugin>
+
+#include <uibase/iinstallationmanager.h>
+#include <uibase/imodinterface.h>
+#include <uibase/imodlist.h>
+#include <uibase/log.h>
+#include <uibase/report.h>
+#include <uibase/utility.h>
+
+#include "fomodinstallerdialog.h"
 
 using namespace MOBase;
 
@@ -82,8 +82,7 @@ bool InstallerFomod::isManualInstaller() const
   return false;
 }
 
-void InstallerFomod::onInstallationStart(QString const& archive, bool reinstallation,
-                                         IModInterface* currentMod)
+void InstallerFomod::onInstallationStart(QString const&, bool, IModInterface*)
 {
   m_InstallerUsed = false;
 }
