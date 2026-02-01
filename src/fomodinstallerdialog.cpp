@@ -416,7 +416,7 @@ QString FomodInstallerDialog::toString(IPluginList::PluginStates state)
     return "Inactive";
   if (state.testFlag(IPluginList::STATE_ACTIVE))
     return "Active";
-  throw Exception(tr("invalid plugin state %1").arg(state));
+  throw Exception(tr("invalid plugin state %1").arg(static_cast<int>(state)));
 }
 
 std::pair<bool, QString>
