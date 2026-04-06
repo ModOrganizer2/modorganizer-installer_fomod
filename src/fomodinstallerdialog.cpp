@@ -760,14 +760,14 @@ void FomodInstallerDialog::readFileList(XmlReader& reader, FileDescriptorList& f
       if (attributes.value("source").isEmpty()) {
         log::debug("Ignoring {} entry with empty source.", reader.name().toString());
       } else {
-        FileDescriptor* file           = new FileDescriptor(this);
-        file->m_Source                 = attributes.value("source").toString();
-        file->m_Destination            = attributes.hasAttribute("destination")
-                                             ? attributes.value("destination").toString()
-                                             : file->m_Source;
-        file->m_Priority               = attributes.hasAttribute("priority")
-                                             ? attributes.value("priority").toString().toInt()
-                                             : 0;
+        FileDescriptor* file = new FileDescriptor(this);
+        file->m_Source       = attributes.value("source").toString();
+        file->m_Destination  = attributes.hasAttribute("destination")
+                                   ? attributes.value("destination").toString()
+                                   : file->m_Source;
+        file->m_Priority     = attributes.hasAttribute("priority")
+                                   ? attributes.value("priority").toString().toInt()
+                                   : 0;
         file->m_FileSystemItemSequence = ++m_FileSystemItemSequence;
         file->m_IsFolder               = reader.name().toString() == "folder";
         file->m_InstallIfUsable =
